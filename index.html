@@ -1291,8 +1291,16 @@ async function loadWatchlist(force){
   body.innerHTML='<div class="jempty">Screening the market…</div>';
   try{
     const res=await fetch('/api/watchlist'+(force?'?t='+Date.now():''));
-    const d=await res.json();
-    if(d.error)throw new Error(d.error);
+    const txt=await res.text();
+    let d;
+    try{d=JSON.parse(txt);}
+    catch(_){
+      // Vercel returned an HTML error page (crash or timeout), not JSON.
+      throw new Error(res.status===504
+        ? 'The screener timed out. Hit Refresh again — it caches after the first successful run.'
+        : 'The screener failed (HTTP '+res.status+'). Try Refresh again in a moment.');
+    }
+    if(d.error)throw new Error(d.error+(d.hint?' — '+d.hint:''));
     watchlist=d; renderWatchlist();
   }catch(err){
     body.innerHTML='<div class="err">Could not load the watchlist: '+esc(err.message||'error')+'</div>';
