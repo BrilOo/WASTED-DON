@@ -1,0 +1,1346 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WASTED_DON — Chart Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d1014; --panel:#151a21; --panel2:#1b212b; --line:#283041;
+    --ink:#e8ecf3; --muted:#7d8799; --muted2:#566072;
+    --gold:#f0b429; --long:#34c77b; --short:#f0565b; --info:#5aa9ff;
+    --sans:'Inter',system-ui,sans-serif; --disp:'Space Grotesk',sans-serif; --mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  button{font-family:inherit;cursor:pointer}
+  input,textarea{font-family:inherit}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}
+
+  .wrap{max-width:1160px;margin:0 auto;padding:0 18px 60px}
+
+  /* header */
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 0 18px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:11px}
+  .mark{width:34px;height:34px;flex:none}
+  .brand h1{font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:.08em;margin:0;text-transform:uppercase}
+  .brand .sub{font-size:11px;letter-spacing:.28em;color:var(--muted);text-transform:uppercase;margin-top:2px}
+  .tabs{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px}
+  .tabs button{background:none;border:0;color:var(--muted);padding:8px 16px;border-radius:7px;font-weight:600;font-size:13px;letter-spacing:.02em}
+  .tabs button.on{background:var(--panel2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+
+  /* layout */
+  .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:18px;align-items:start}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .card h2{font-family:var(--disp);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;font-weight:600}
+
+  label.fld{display:block;margin-bottom:14px}
+  label.fld span{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;letter-spacing:.02em}
+  input[type=text],input[type=number],textarea{
+    width:100%;background:var(--bg);border:1px solid var(--line);border-radius:9px;color:var(--ink);
+    padding:10px 12px;font-size:14px;outline:none;transition:border-color .15s}
+  input:focus,textarea:focus{border-color:var(--gold)}
+  textarea{resize:vertical;min-height:74px;line-height:1.55}
+  .num input{font-family:var(--mono);font-weight:600}
+
+  /* dropzone */
+  .drop{border:1.5px dashed var(--line);border-radius:12px;padding:26px 16px;text-align:center;color:var(--muted);
+    transition:.15s;cursor:pointer;background:var(--bg)}
+  .drop:hover,.drop.hot{border-color:var(--gold);color:var(--ink);background:#11161d}
+  .drop b{color:var(--ink);font-weight:600}
+  .drop small{display:block;margin-top:5px;font-size:11.5px;color:var(--muted2)}
+  .drop-sm{padding:15px 14px;margin-top:2px}
+  .drop-sm b{font-size:13px}
+  .preview{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+  .preview img{display:block;width:100%}
+  .preview .x{position:absolute;top:8px;right:8px;background:rgba(13,16,20,.82);border:1px solid var(--line);
+    color:var(--ink);width:30px;height:30px;border-radius:8px;font-size:16px;line-height:1}
+
+  .gallery{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .gallery:empty{margin-top:0}
+  .thumb{border:1px solid var(--line);border-radius:11px;overflow:hidden;background:var(--bg)}
+  .thumb .imgwrap{position:relative}
+  .thumb img{display:block;width:100%;height:92px;object-fit:cover}
+  .thumb .x{position:absolute;top:6px;right:6px;background:rgba(13,16,20,.85);border:1px solid var(--line);
+    color:var(--ink);width:26px;height:26px;border-radius:7px;font-size:13px;line-height:1;display:grid;place-items:center;cursor:pointer}
+  .thumb .tf{width:100%;border:0;border-top:1px solid var(--line);background:var(--bg);color:var(--ink);
+    padding:7px 9px;font-size:12px;font-family:var(--mono);outline:none}
+  .thumb .tf::placeholder{color:var(--muted2)}
+  .thumb .tf:focus{background:#11161d}
+
+  /* concept chips */
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{border:1px solid var(--line);background:var(--bg);color:var(--muted);padding:6px 11px;border-radius:20px;
+    font-size:12.5px;font-weight:500;display:flex;align-items:center;gap:6px;transition:.12s}
+  .chip.on{border-color:var(--gold);color:var(--ink);background:#1a1c14}
+  .chip .dot{width:7px;height:7px;border-radius:50%;background:var(--muted2)}
+  .chip.on .dot{background:var(--gold)}
+  .empty-mini{font-size:12.5px;color:var(--muted2);font-style:italic}
+
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .ctxhead{font-family:var(--disp);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:4px 0 9px}
+  .hint{font-size:11.5px;color:var(--muted2);line-height:1.5;margin:-4px 0 14px}
+  .go{width:100%;margin-top:4px;background:var(--gold);color:#171206;border:0;border-radius:10px;padding:13px;
+    font-weight:700;font-size:14.5px;letter-spacing:.03em;font-family:var(--disp);transition:.15s}
+  .go:hover{filter:brightness(1.06)}
+  .go:disabled{opacity:.5;cursor:default}
+
+  /* output ticket */
+  .ticket-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    min-height:340px;color:var(--muted2);gap:12px;padding:24px}
+  .ticket-empty svg{opacity:.5}
+
+  .dir-tab{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:9px;font-family:var(--disp);
+    font-weight:700;letter-spacing:.1em;font-size:14px;text-transform:uppercase}
+  .dir-long{background:rgba(52,199,123,.13);color:var(--long);box-shadow:inset 0 0 0 1px rgba(52,199,123,.4)}
+  .dir-short{background:rgba(240,86,91,.13);color:var(--short);box-shadow:inset 0 0 0 1px rgba(240,86,91,.4)}
+  .dir-none{background:var(--panel2);color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}
+
+  .grade{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:9px;font-family:var(--disp);
+    font-weight:700;font-size:13px;letter-spacing:.06em}
+  .grade .g{font-size:17px;line-height:1}
+  .grade-A{background:rgba(52,199,123,.13);color:var(--long);box-shadow:inset 0 0 0 1px rgba(52,199,123,.4)}
+  .grade-B{background:rgba(240,180,41,.12);color:var(--gold);box-shadow:inset 0 0 0 1px rgba(240,180,41,.4)}
+  .grade-C{background:rgba(240,86,91,.11);color:var(--short);box-shadow:inset 0 0 0 1px rgba(240,86,91,.38)}
+
+  .checklist{display:flex;flex-direction:column;gap:7px;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:12px 13px;margin-bottom:16px}
+  .ck{display:flex;align-items:center;gap:9px;font-size:13px}
+  .ck .mk{width:18px;height:18px;border-radius:5px;display:grid;place-items:center;font-size:12px;font-weight:700;flex:none}
+  .ck.met .mk{background:rgba(52,199,123,.16);color:var(--long)}
+  .ck.no .mk{background:rgba(240,86,91,.14);color:var(--short)}
+  .ck.met .lbl{color:#cdd4df}
+  .ck.no .lbl{color:var(--muted)}
+
+  .readi{display:flex;gap:11px;align-items:flex-start;border-radius:11px;padding:12px 13px;margin-bottom:16px}
+  .readi-go{background:rgba(52,199,123,.1);box-shadow:inset 0 0 0 1px rgba(52,199,123,.38)}
+  .readi-wait{background:rgba(240,180,41,.09);box-shadow:inset 0 0 0 1px rgba(240,180,41,.36)}
+  .readi .ri{font-size:18px;line-height:1.2;flex:none}
+  .readi-go .ri{color:var(--long)} .readi-wait .ri{color:var(--gold)}
+  .readi .rt{font-family:var(--disp);font-weight:700;font-size:13.5px;letter-spacing:.02em}
+  .readi-go .rt{color:var(--long)} .readi-wait .rt{color:var(--gold)}
+  .readi .rs{font-size:12.5px;color:#cdd4df;margin-top:3px;line-height:1.5}
+
+  .meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+  .meta .asset{font-family:var(--mono);font-weight:600;color:var(--ink)}
+  .meta .tf{font-size:12px;color:var(--muted);font-family:var(--mono)}
+
+  .levels{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+  @media(max-width:420px){.levels{grid-template-columns:1fr}}
+  .lvl{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+  .lvl .k{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .lvl .v{font-family:var(--mono);font-weight:700;font-size:17px}
+  .lvl.entry .v{color:var(--gold)}
+  .lvl.sl .v{color:var(--short)}
+  .lvl.tp .v{color:var(--long)}
+  .lvl .v small{font-size:11px;color:var(--muted2);font-weight:500}
+
+  /* RR bar */
+  .rrbar{height:9px;border-radius:6px;overflow:hidden;display:flex;margin:4px 0 16px;background:var(--bg);border:1px solid var(--line)}
+  .rrbar .risk{background:var(--short)}
+  .rrbar .reward{background:var(--long)}
+
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+  .stat{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .stat .k{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+  .stat .v{font-family:var(--mono);font-weight:600;font-size:15px}
+
+  .conf{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .conf .track{flex:1;height:7px;background:var(--bg);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .conf .fill{height:100%;background:linear-gradient(90deg,var(--short),var(--gold),var(--long))}
+  .conf .pct{font-family:var(--mono);font-weight:700;font-size:13px;min-width:38px;text-align:right}
+
+  .block{margin-bottom:14px}
+  .block .k{font-family:var(--disp);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-weight:600}
+  .block p{margin:0;font-size:13.5px;line-height:1.6;color:#cdd4df}
+  .warn{background:rgba(240,180,41,.08);border:1px solid rgba(240,180,41,.3);border-radius:10px;padding:11px 13px;
+    font-size:13px;color:#e8d9a8;line-height:1.55}
+
+  /* concepts manager */
+  .clist{display:flex;flex-direction:column;gap:11px;margin-top:16px}
+  .citem{background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:13px 14px}
+  .citem .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .citem h3{margin:0;font-size:14.5px;font-weight:600;font-family:var(--disp);letter-spacing:.01em}
+  .citem p{margin:7px 0 0;font-size:13px;color:#c2c9d4;line-height:1.55;white-space:pre-wrap}
+  .citem .acts{display:flex;gap:6px;flex:none}
+  .iconbtn{background:var(--panel2);border:1px solid var(--line);color:var(--muted);width:30px;height:30px;
+    border-radius:8px;font-size:13px;display:grid;place-items:center;transition:.12s}
+  .iconbtn:hover{color:var(--ink);border-color:var(--muted2)}
+  .iconbtn.del:hover{color:var(--short);border-color:var(--short)}
+
+  .ghost{background:none;border:1px solid var(--line);color:var(--muted);border-radius:9px;padding:10px 14px;font-weight:600;font-size:13px}
+  .ghost:hover{color:var(--ink);border-color:var(--muted2)}
+  .formrow{display:flex;gap:10px;margin-top:4px}
+
+  .err{background:rgba(240,86,91,.1);border:1px solid rgba(240,86,91,.35);color:#f3b0b2;border-radius:10px;padding:11px 13px;font-size:13px;margin-top:14px;line-height:1.5}
+
+  footer{margin-top:26px;text-align:center;font-size:11.5px;color:var(--muted2);letter-spacing:.02em;line-height:1.6}
+  footer b{color:var(--muted);font-weight:600}
+
+  .spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(23,18,6,.35);border-top-color:#171206;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:7px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .hidden{display:none!important}
+
+  /* audit */
+  .audit{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin-bottom:16px;font-size:12.5px;line-height:1.7}
+  .audit .arow{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+  .audit .ak{color:var(--muted);flex:none}
+  .audit .av{font-family:var(--mono);color:var(--ink);text-align:right;word-break:break-word}
+  .audit .av.bad{color:var(--short)}
+  .alertbox{background:rgba(90,169,255,.09);border:1px solid rgba(90,169,255,.34);border-radius:11px;padding:11px 13px;margin-bottom:14px}
+  .alertbox .ab-k{font-family:var(--disp);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--info);font-weight:700;margin-bottom:4px}
+  .alertbox .ab-v{font-family:var(--mono);font-weight:700;font-size:19px;color:var(--info)}
+  .alertbox .ab-n{font-size:12.5px;color:#c3d4ea;margin-top:4px;line-height:1.5}
+  .badrec{background:rgba(240,86,91,.1);border:1px solid rgba(240,86,91,.4);border-radius:11px;padding:11px 13px;margin-bottom:14px;font-size:12.5px;line-height:1.55;color:#f3b6b8}
+  .logrow{margin-top:6px}
+  #logBtn{width:100%;background:var(--panel2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line);border:0;border-radius:10px;padding:12px;font-weight:700;font-family:var(--disp);letter-spacing:.02em;font-size:13.5px}
+  #logBtn:disabled{color:var(--long);opacity:1}
+
+  /* journal */
+  .ie{display:flex;gap:9px;margin-bottom:14px;flex-wrap:wrap}
+  .jstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:10px;margin-bottom:14px}
+  .jstat{background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:11px 12px}
+  .jstat .k{font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+  .jstat .v{font-family:var(--mono);font-weight:700;font-size:18px}
+  .jstat .sub{font-size:10.5px;color:var(--muted2);margin-top:3px;font-family:var(--mono);line-height:1.5}
+  .jrow{display:flex;gap:11px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:10px}
+  .jrow>img{width:60px;height:60px;object-fit:cover;border-radius:8px;flex:none;border:1px solid var(--line)}
+  .jrow .jb{flex:1;min-width:0}
+  .jtop{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:6px}
+  .jtag{font-family:var(--mono);font-size:10.5px;padding:2px 7px;border-radius:6px;font-weight:700;letter-spacing:.02em}
+  .jdate{font-size:10.5px;color:var(--muted2);font-family:var(--mono)}
+  .jlv{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-bottom:8px;word-break:break-word}
+  .jout{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .obtn{border:1px solid var(--line);background:var(--panel2);color:var(--muted);border-radius:7px;padding:5px 9px;font-size:11.5px;font-weight:600}
+  .obtn.on-win{background:rgba(52,199,123,.16);color:var(--long);border-color:rgba(52,199,123,.4)}
+  .obtn.on-loss{background:rgba(240,86,91,.14);color:var(--short);border-color:rgba(240,86,91,.4)}
+  .obtn.on-be{background:rgba(90,169,255,.14);color:var(--info);border-color:rgba(90,169,255,.4)}
+  .obtn.on-skip{background:var(--panel2);color:var(--ink);border-color:var(--muted2)}
+  .jr{width:58px;font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:5px 7px;outline:none}
+  .jdel{margin-left:auto;background:none;border:0;color:var(--muted2);font-size:15px;cursor:pointer;align-self:flex-start}
+  .jempty{text-align:center;color:var(--muted2);padding:36px 16px;font-size:13px;line-height:1.6}
+  .wlrow{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:10px}
+  .wltop{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:6px}
+  .wlcoin{font-family:var(--mono);font-weight:700;font-size:15px;color:var(--ink)}
+  .wlpx{font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .wlside{font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
+  .wlside.lows{background:rgba(52,199,123,.14);color:var(--long)}
+  .wlside.highs{background:rgba(240,86,91,.14);color:var(--short)}
+  .wlmeta{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted2)}
+  .wlnote{font-size:12.5px;color:#c2c9d4;line-height:1.55}
+  .wlbad{margin-top:7px;font-size:12px;color:#f3b6b8}
+  .jcoin{width:78px;font-family:var(--mono);font-size:11.5px;font-weight:700;background:var(--bg);border:1px solid var(--line);border-radius:6px;color:var(--ink);padding:3px 7px;text-transform:uppercase;outline:none}
+  .jcoin:focus{border-color:var(--gold)}
+  .jnote{width:100%;margin-top:9px;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:8px 10px;font-size:12.5px;font-family:var(--sans);resize:vertical;min-height:34px;outline:none;line-height:1.5}
+  .jnote:focus{border-color:var(--gold)}
+  .jnote::placeholder{color:var(--muted2)}
+  .coachrow{margin-top:8px}
+  .coachbtn{background:var(--panel2);border:1px solid var(--line);color:var(--gold);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:600}
+  .coachbtn:hover{border-color:var(--gold)}
+  .coachbtn:disabled{opacity:.6}
+  .solution{margin-top:9px;background:rgba(240,180,41,.07);border:1px solid rgba(240,180,41,.28);border-radius:9px;padding:10px 12px}
+  .solution .sk{font-family:var(--disp);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:5px;font-weight:600}
+  .solution p{margin:0;font-size:13px;line-height:1.6;color:#e2d9c2;white-space:pre-wrap}
+  .coachbtn.good{color:var(--long)}
+  .coachbtn.good:hover{border-color:var(--long)}
+  .solution.good{background:rgba(52,199,123,.07);border-color:rgba(52,199,123,.28)}
+  .solution.good .sk{color:var(--long)}
+  .solution.good p{color:#cfe9d8}
+  .ocwrap{margin-top:9px}
+  .ocadd{background:var(--panel2);border:1px dashed var(--line);color:var(--muted);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;width:100%}
+  .ocadd:hover{border-color:var(--gold);color:var(--ink)}
+  .ocprev{position:relative;border:1px solid var(--line);border-radius:9px;overflow:hidden;max-width:100%}
+  .ocprev img{display:block;width:100%}
+  .ocprev .x{position:absolute;top:6px;right:6px;background:rgba(13,16,20,.85);border:1px solid var(--line);color:var(--ink);width:26px;height:26px;border-radius:7px;font-size:13px;line-height:1;display:grid;place-items:center;cursor:pointer}
+  .revrow{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .duebadge{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.35);border-radius:20px;padding:4px 10px;font-weight:600}
+  .insights{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:14px}
+  .insights .ik{font-family:var(--disp);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:9px;font-weight:600}
+  .irow{margin-bottom:9px}
+  .irow .il,.irule .il{display:inline-block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;font-weight:600}
+  .il.good{color:var(--long)} .il.gold{color:var(--gold)}
+  .insights p{margin:0;font-size:13px;line-height:1.55;color:#cdd4df}
+  .irule{border-top:1px solid var(--line);margin-top:4px;padding-top:10px}
+  .addrule{display:flex;gap:8px;margin-top:9px}
+  .addrule select{flex:1;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:var(--sans);outline:none}
+  .lessons{background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:6px 4px;margin-bottom:14px}
+  .lessons .ik{font-family:var(--disp);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:9px 11px 5px;font-weight:600}
+  .lhead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 11px 5px}
+  .clearles{background:none;border:1px solid var(--line);color:var(--muted);border-radius:7px;padding:4px 10px;font-size:11px;font-weight:600}
+  .clearles:hover{color:var(--short);border-color:var(--short)}
+  .lrow{display:flex;gap:9px;align-items:baseline;padding:6px 11px;font-size:12px;border-top:1px solid var(--line)}
+  .lrow .ltag{font-family:var(--mono);font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:5px;background:rgba(240,86,91,.14);color:var(--short);flex:none}
+  .lrow .ltag.good{background:rgba(52,199,123,.14);color:var(--long)}
+  .lrow .lc{font-family:var(--mono);color:var(--muted);min-width:44px;flex:none}
+  .lrow .lt{color:#c2c9d4;line-height:1.5}
+  .focus{display:flex;align-items:center;gap:10px;background:rgba(240,180,41,.09);border:1px solid rgba(240,180,41,.32);border-radius:11px;padding:11px 13px;margin-bottom:16px}
+  .focus .ft{font-family:var(--disp);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:700;flex:none}
+  .focus .fx{font-size:13px;color:#e8dcc0;line-height:1.4;flex:1}
+  .focus .fd{background:none;border:0;color:var(--muted);font-size:14px;cursor:pointer;flex:none}
+  .csum{background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:4px 4px 6px;margin-bottom:14px}
+  .csumh{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:9px 11px 5px}
+  .crow{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;padding:8px 11px;font-size:12.5px;border-top:1px solid var(--line)}
+  .crow .cc{font-family:var(--mono);font-weight:700;min-width:56px;color:var(--ink)}
+  .crow .cn{color:var(--muted);min-width:58px}
+  .crow .cd{font-family:var(--mono)}
+  .crow .cwr{font-family:var(--mono);font-weight:700;color:var(--ink);min-width:40px;text-align:right}
+  .crow .cw{margin-left:auto;font-family:var(--mono);color:var(--muted)}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 40 40" fill="none">
+        <rect x="1" y="1" width="38" height="38" rx="9" fill="#151a21" stroke="#283041"/>
+        <path d="M20 7 L31 20 L24 20 L24 33 L16 33 L16 20 L9 20 Z" fill="#f0b429"/>
+        <circle cx="20" cy="14" r="2.4" fill="#0d1014"/>
+      </svg>
+      <div>
+        <h1>WASTED_DON</h1>
+        <div class="sub">Chart Desk · Crypto</div>
+      </div>
+    </div>
+    <div class="tabs">
+      <button id="tabAnalyze" class="on" onclick="setView('analyze')">Analyze</button>
+      <button id="tabConcepts" onclick="setView('concepts')">Concepts</button>
+      <button id="tabJournal" onclick="setView('journal')">Journal</button>
+      <button id="tabWatchlist" onclick="setView('watchlist')">Watchlist</button>
+    </div>
+  </header>
+
+  <!-- ANALYZE VIEW -->
+  <div id="viewAnalyze">
+    <div id="focusBanner" class="focus hidden"></div>
+    <div class="grid">
+      <!-- input -->
+      <div class="card">
+        <h2>Charts in <span id="chartCount" style="color:var(--muted2);font-family:var(--mono)"></span></h2>
+        <div class="drop" id="drop" onclick="setPaste('charts');document.getElementById('file').click()">
+          <b>Drop chart screenshots</b>
+          <small>or tap to upload · add multiple timeframes · up to 6</small>
+        </div>
+        <input type="file" id="file" accept="image/*" multiple class="hidden">
+        <div class="gallery" id="gallery"></div>
+
+        <label class="fld" style="margin-top:16px">
+          <span>Instructions for this analysis <em style="color:var(--muted2);font-style:normal">(optional)</em></span>
+          <textarea id="instructions" placeholder="e.g. BTC/USDT — 4H, 1H and 15m attached. Bias from 4H, entry on the 15m. Watching the sweep below equal lows."></textarea>
+        </label>
+
+        <div class="ctxhead">Market context <em style="color:var(--muted2);font-style:normal;letter-spacing:0">(optional — positioning &amp; flow)</em></div>
+        <div class="row2">
+          <label class="fld num"><span>Funding rate (%)</span>
+            <input type="number" id="funding" step="any" placeholder="e.g. 0.01 or -0.03"></label>
+          <label class="fld"><span>Net exchange flow</span>
+            <input type="text" id="netflow" placeholder="e.g. -1,500 BTC out · +$120M in"></label>
+        </div>
+        <div class="hint">Funding: + = longs pay shorts (crowded longs). Flow: into exchanges = potential sell pressure, out = accumulation. Type values, or drop/paste a screenshot below (funding, net inflow, or an ATR panel).</div>
+        <div class="drop drop-sm" id="ctxDrop" onclick="setPaste('ctx');document.getElementById('ctxFile').click()">
+          <b>Drop or paste a data screenshot</b>
+          <small>funding · net inflow · OI · ATR — read for values, click then ⌘/Ctrl+V to paste</small>
+        </div>
+        <input type="file" id="ctxFile" accept="image/*" multiple class="hidden">
+        <div class="gallery" id="ctxGallery"></div>
+
+        <div class="fld">
+          <span>Apply concepts</span>
+          <div class="chips" id="conceptChips"></div>
+        </div>
+
+        <div class="row2">
+          <label class="fld num"><span>Account balance ($)</span>
+            <input type="number" id="account" placeholder="10000" min="0" step="any"></label>
+          <label class="fld num"><span>Risk per trade (%)</span>
+            <input type="number" id="risk" placeholder="1" min="0" step="any"></label>
+        </div>
+        <label class="fld"><span>Access code <em style="color:var(--muted2);font-style:normal">(if the owner set one)</em></span>
+          <input type="text" id="access" placeholder="enter access code" onchange="saveAccess()"></label>
+
+        <button class="go" id="analyzeBtn" onclick="runAnalysis()">Analyze charts</button>
+        <div id="errBox"></div>
+      </div>
+
+      <!-- output -->
+      <div class="card">
+        <h2>Trade ticket</h2>
+        <div id="ticket">
+          <div class="ticket-empty">
+            <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#566072" stroke-width="1.4">
+              <path d="M3 17l5-5 4 3 6-7"/><path d="M3 21h18"/>
+            </svg>
+            <div>Upload your charts and run the analysis.<br>Your ticket — entry, stop, targets, size — lands here.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONCEPTS VIEW -->
+  <div id="viewConcepts" class="hidden">
+    <div class="card" style="max-width:760px;margin:0 auto">
+      <h2>Your concepts</h2>
+      <p style="margin:0 0 14px;color:var(--muted);font-size:13px;line-height:1.55">
+        Add the ideas, rules and setups you trade by. WASTED_DON reads every chart through these — order blocks, FVGs, liquidity, your entry triggers, whatever your edge is built on.</p>
+
+      <label class="fld"><span>Concept name</span>
+        <input type="text" id="cTitle" placeholder="e.g. Liquidity sweep + displacement"></label>
+      <label class="fld"><span>How it works / your rules</span>
+        <textarea id="cBody" placeholder="Describe the setup and your exact criteria: what to look for, where you enter, where the stop goes, what confirms it, what invalidates it."></textarea></label>
+      <div class="formrow">
+        <button class="go" style="flex:1" onclick="saveConcept()" id="saveConceptBtn">Add concept</button>
+        <button class="ghost hidden" id="cancelEdit" onclick="cancelEdit()">Cancel</button>
+      </div>
+
+      <div class="clist" id="conceptList"></div>
+    </div>
+  </div>
+
+  <!-- JOURNAL VIEW -->
+  <div id="viewJournal" class="hidden">
+    <div class="card" style="max-width:760px;margin:0 auto">
+      <h2>Journal &amp; edge stats</h2>
+      <p style="margin:0 0 14px;color:var(--muted);font-size:13px;line-height:1.55">
+        Log the reads you act on, then tag each outcome. Over time this shows whether your A-grades really beat your C-grades, and whether reaction entries beat anticipation — the only honest way to know if the edge works.</p>
+      <div class="ie">
+        <button class="ghost" onclick="exportData()">⬇ Export backup</button>
+        <button class="ghost" onclick="importData()">⬆ Import backup</button>
+        <input type="file" id="importFile" accept="application/json" class="hidden" onchange="handleImport(event)">
+        <input type="file" id="outcomeFile" accept="image/*" class="hidden" onchange="handleOutcomeFile(event)">
+      </div>
+      <div id="jmsg" class="hint" style="margin:0 0 12px"></div>
+      <div class="revrow"><button class="ghost" id="reviewBtn" onclick="runReview()">🔎 Run review</button><span id="reviewDue" class="duebadge hidden">weekly review due</span></div>
+      <div id="jinsights"></div>
+      <div id="jstats"></div>
+      <div id="jlessons"></div>
+      <div id="jlist"></div>
+    </div>
+  </div>
+
+  <!-- WATCHLIST VIEW -->
+  <div id="viewWatchlist" class="hidden">
+    <div class="card" style="max-width:820px;margin:0 auto">
+      <h2>Daily watchlist</h2>
+      <p style="margin:0 0 6px;color:var(--muted);font-size:13px;line-height:1.55">
+        Coins where a setup may be <b style="color:var(--ink)">forming</b> — price coiling near an un-swept liquidity level, volatility contracting. Coins that already ran are deliberately excluded, because those are the chase.</p>
+      <div class="hint" style="margin:0 0 12px">Refreshes automatically each morning at 4:00 (Africa/Nairobi).</div>
+      <div class="revrow"><button class="ghost" onclick="loadWatchlist(true)">↻ Refresh now</button><span id="wlTime" class="jdate"></span></div>
+      <div id="wlBody"></div>
+    </div>
+  </div>
+
+  <footer>
+    WASTED_DON applies <b>your own framework</b> to each chart — it is not financial advice and cannot predict markets.<br>
+    Every level, size and decision is yours to verify. You own the risk.
+  </footer>
+</div>
+
+<script>
+const MODEL="claude-sonnet-4-6";
+let concepts=[];           // {id,title,body}
+let selected=new Set();    // selected concept ids
+let editingId=null;
+
+/* ---------- seed concepts (load on first run / empty storage) ---------- */
+const SEED_CONCEPTS=[
+  {id:"seed_bagtract_loose", title:"BAGTRACT (loose) — SMC bias entry",
+   body:`A flexible SMC/ICT read. ALWAYS give a directional entry and grade it A/B/C — do not refuse.
+
+BIAS: Direction from structure (higher highs/lows = long; lower highs/lows = short) and price vs the dominant trend / MA99 if shown.
+
+CORE (mainly drive the grade):
+- Liquidity grab: price swept beyond a clear level (equal highs/lows, prior day/week high/low, or a swing) and closed back inside.
+- Displacement: a strong impulsive candle/run in the bias direction.
+- Entry zone: a retracement into a Fair Value Gap, Order Block, or Mitigation Block, ideally in the right half (discount for longs, premium for shorts).
+
+SUPPORTING (raise the grade, NOT required):
+- Break of Structure or CHOCH confirmation.
+- Inducement (a smaller opposing pool taken out first).
+
+GRADING:
+- A = sweep + displacement + clean entry zone all present, trend agrees.
+- B = bias clear and an entry zone exists, but one core element is weak/unconfirmed.
+- C = the SMC sequence is mostly absent — do NOT give an entry. Set grade_block=true and say what is missing and what to wait for.
+
+STOP: beyond the recent swing / grab extreme with a small buffer.
+TARGETS: TP1 ~2R; TP2 at the next opposing liquidity level (opposing swing / equal highs / equal lows).`},
+  {id:"seed_bagtract_strict", title:"BAGTRACT — SMC sweep + retracement (strict)", autoselect:true,
+   body:`Quality-over-quantity SMC/ICT setup. Be strict; most charts should NOT qualify (grade C and warn when they don't).
+
+BIAS: Bullish = higher highs + higher lows; bearish = lower highs + lower lows. If choppy/directionless, lowest grade. Entries must agree with the MA99 (or dominant trend if MAs aren't shown).
+
+THE SEQUENCE (all should be present for a top grade):
+- B — Break of Structure: a candle CLOSED beyond the prior swing in the bias direction.
+- A — Accumulation: a tight, low-range contraction phase just before a strong move.
+- G — Liquidity Grab: price wicked BEYOND a clear level (equal highs/lows, prior day/week high or low, or a major swing) then CLOSED back inside.
+- Inducement: a smaller opposing liquidity pool between price and target taken out first.
+
+CONFIRMATION (need at least one AFTER the grab): Displacement (large-body impulsive candle/run), CHOCH (close beyond last opposing internal swing), or BOS in the intended direction.
+
+ENTRY: only on a retracement INTO a Fair Value Gap (3-candle imbalance), Order Block (last opposing candle before displacement), or Mitigation Block — in the correct half: discount (lower) for longs, premium (upper) for shorts.
+
+STOP: just beyond the grab / order block extreme, small buffer.
+TARGETS: TP1 at 2R then breakeven; TP2 at the next opposing major liquidity level.
+
+GOLDEN GATE — grade A only if ALL true: (1) sweep occurred, (2) inducement cleared, (3) displacement present, (4) BOS or CHOCH confirmed, (5) retrace into a valid FVG/OB/MB in the correct premium/discount half. Each missing gate lowers the grade.`},
+  {id:"seed_atr_vol", title:"ATR volatility & sizing",
+   body:`Use ATR (Average True Range) to read volatility and drive a volatility-based stop.
+
+- If an ATR value is visible in a provided data screenshot (or on the chart), read it and convert to % of price: ATR% = ATR ÷ price × 100. Put that number in the atr_pct field. If no ATR is shown, estimate ATR% visually from candle size on the execution timeframe and still fill atr_pct.
+- Classify volatility from atr_pct into the volatility field: under ~1% = low, ~1–4% = medium, over ~4% = high (judge for the timeframe). Add a short volatility_note. If very low, note the setup may lack room; if very high, note larger swings.
+- The tool will place a stop at 1.5× ATR from entry and size the position from it, so make atr_pct accurate for the execution timeframe.`},
+  {id:"seed_exit_rules", title:"Exit & risk rules", autoselect:true,
+   body:`My fixed exit and risk rules — apply to every read and every coaching fix:
+- SINGLE ENTRY only. Never suggest scaling in or averaging down.
+- Stop: fixed at the structure level (beyond the liquidity grab / order block).
+- Move the stop to BREAKEVEN once price is about 1R in my favour.
+- Take profit: one or more targets (first around 2R); I may scale out across several targets when testing.
+Keep entry and stop as one clean setup with a single R:R to the first target.`},
+  {id:"seed_no_fomo", title:"Avoid FOMO / no chasing", autoselect:true,
+   body:`Never chase price. Flag as FOMO (set fomo_block=true → no entry, wait for a pullback) when ANY clear sign is present:
+- Price has already run a long way from the setup origin with no pullback (entering near the top of a long move / bottom of a short move).
+- The candle at entry is vertical/parabolic — chasing a big impulsive candle instead of the retrace.
+- The entry would be mid-move, far from a valid FVG / order block / value zone.
+- R:R is poor because the clean entry was already missed (stop now far, target now close).
+Only block CLEAR chases — a normal pullback entry within a trend is fine. When in doubt, wait for a retrace into a valid zone in the correct premium/discount half.`}
+];
+
+/* ---------- storage ---------- */
+async function storeGet(k){try{return localStorage.getItem('wd_'+k);}catch(e){return null;}}
+async function storeSet(k,v){try{localStorage.setItem('wd_'+k,v);}catch(e){}}
+
+let journal=[];
+let insights=null;
+let conceptBaseline=0;
+let lastRead=null, logMeta={};
+
+async function loadState(){
+  try{const r=await storeGet('concepts'); if(r) concepts=JSON.parse(r);}catch(e){}
+  try{const s=await storeGet('settings'); if(s){const v=JSON.parse(s);
+    if(v.account!=null)document.getElementById('account').value=v.account;
+    if(v.risk!=null)document.getElementById('risk').value=v.risk;}}catch(e){}
+  try{const j=await storeGet('journal'); if(j) journal=JSON.parse(j);}catch(e){}
+  try{const ac=await storeGet('access'); if(ac)document.getElementById('access').value=ac;}catch(e){}
+  try{const ins=await storeGet('insights'); if(ins) insights=JSON.parse(ins);}catch(e){}
+  try{const cb=await storeGet('conceptBaseline'); if(cb!=null){conceptBaseline=parseInt(cb)||0;} else {conceptBaseline=journal.length; await storeSet('conceptBaseline',String(conceptBaseline));}}catch(e){conceptBaseline=journal.length;}
+  if(!concepts.length){
+    concepts=SEED_CONCEPTS.map(c=>({...c}));
+    selected=new Set(SEED_CONCEPTS.filter(c=>c.autoselect).map(c=>c.id));
+  }else{
+    selected=new Set(concepts.map(c=>c.id));
+    SEED_CONCEPTS.forEach(sc=>{ if(!concepts.some(c=>c.id===sc.id)){concepts.push({...sc}); if(sc.autoselect)selected.add(sc.id);} });
+  }
+  saveConcepts();
+  renderConcepts(); renderChips(); renderJournal(); renderFocus();
+}
+async function saveConcepts(){await storeSet('concepts',JSON.stringify(concepts));}
+async function saveSettings(){
+  await storeSet('settings',JSON.stringify({account:document.getElementById('account').value, risk:document.getElementById('risk').value}));
+}
+async function saveJournal(){await storeSet('journal',JSON.stringify(journal));}
+async function saveAccess(){await storeSet('access',document.getElementById('access').value.trim());}
+['account','risk'].forEach(id=>document.getElementById(id).addEventListener('change',saveSettings));
+
+/* ---------- view switch ---------- */
+function setView(v){
+  ['Analyze','Concepts','Journal','Watchlist'].forEach(x=>{
+    document.getElementById('view'+x).classList.toggle('hidden',v!==x.toLowerCase());
+    document.getElementById('tab'+x).classList.toggle('on',v===x.toLowerCase());
+  });
+  if(v==='journal')renderJournal();
+  if(v==='analyze')renderFocus();
+  if(v==='watchlist')loadWatchlist();
+}
+
+/* ---------- concepts manager ---------- */
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function saveConcept(){
+  const t=document.getElementById('cTitle').value.trim();
+  const b=document.getElementById('cBody').value.trim();
+  if(!t){document.getElementById('cTitle').focus();return;}
+  if(editingId){
+    const c=concepts.find(x=>x.id===editingId); if(c){c.title=t;c.body=b;}
+    cancelEdit();
+  }else{
+    const id=uid(); concepts.push({id,title:t,body:b}); selected.add(id);
+  }
+  document.getElementById('cTitle').value=''; document.getElementById('cBody').value='';
+  saveConcepts(); renderConcepts(); renderChips();
+}
+function editConcept(id){
+  const c=concepts.find(x=>x.id===id); if(!c)return;
+  editingId=id;
+  document.getElementById('cTitle').value=c.title;
+  document.getElementById('cBody').value=c.body;
+  document.getElementById('saveConceptBtn').textContent='Save changes';
+  document.getElementById('cancelEdit').classList.remove('hidden');
+  document.getElementById('cTitle').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function cancelEdit(){
+  editingId=null;
+  document.getElementById('cTitle').value=''; document.getElementById('cBody').value='';
+  document.getElementById('saveConceptBtn').textContent='Add concept';
+  document.getElementById('cancelEdit').classList.add('hidden');
+}
+function delConcept(id){
+  concepts=concepts.filter(x=>x.id!==id); selected.delete(id);
+  if(editingId===id)cancelEdit();
+  saveConcepts(); renderConcepts(); renderChips();
+}
+function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function renderConcepts(){
+  const el=document.getElementById('conceptList');
+  if(!concepts.length){el.innerHTML='<div class="empty-mini" style="margin-top:14px">No concepts yet — add your first one above.</div>';return;}
+  el.innerHTML=concepts.map(c=>`<div class="citem"><div class="top">
+    <h3>${esc(c.title)}</h3>
+    <div class="acts">
+      <button class="iconbtn" onclick="editConcept('${c.id}')" title="Edit">✎</button>
+      <button class="iconbtn del" onclick="delConcept('${c.id}')" title="Delete">✕</button>
+    </div></div>${c.body?`<p>${esc(c.body)}</p>`:''}</div>`).join('');
+}
+function renderChips(){
+  const el=document.getElementById('conceptChips');
+  if(!concepts.length){el.innerHTML='<div class="empty-mini">No concepts saved. Add them in the Concepts tab — or run without and WASTED_DON uses general technical analysis.</div>';return;}
+  el.innerHTML=concepts.map(c=>`<button class="chip ${selected.has(c.id)?'on':''}" onclick="toggleChip('${c.id}')"><span class="dot"></span>${esc(c.title)}</button>`).join('');
+}
+function toggleChip(id){selected.has(id)?selected.delete(id):selected.add(id);renderChips();}
+
+/* ---------- image upload (multi) ---------- */
+const MAX_IMG=6;
+let images=[]; // price charts {id,b64,mediaType,url,tf}
+const MAX_CTX=3;
+let ctxImages=[]; // data screenshots {id,b64,mediaType,url}
+let pasteTarget='charts';
+function setPaste(t){pasteTarget=t;}
+
+const fileInput=document.getElementById('file');
+const drop=document.getElementById('drop');
+fileInput.addEventListener('change',e=>{handleFiles(e.target.files,'charts');fileInput.value='';});
+['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('hot');}));
+['dragleave'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('hot');}));
+drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('hot');handleFiles(e.dataTransfer.files,'charts');});
+
+const ctxFile=document.getElementById('ctxFile');
+const ctxDrop=document.getElementById('ctxDrop');
+ctxFile.addEventListener('change',e=>{handleFiles(e.target.files,'ctx');ctxFile.value='';});
+['dragover','dragenter'].forEach(ev=>ctxDrop.addEventListener(ev,e=>{e.preventDefault();ctxDrop.classList.add('hot');}));
+['dragleave'].forEach(ev=>ctxDrop.addEventListener(ev,e=>{e.preventDefault();ctxDrop.classList.remove('hot');}));
+ctxDrop.addEventListener('drop',e=>{e.preventDefault();ctxDrop.classList.remove('hot');handleFiles(e.dataTransfer.files,'ctx');});
+
+// clipboard paste → routes to whichever zone was last clicked
+document.addEventListener('paste',async e=>{
+  const items=(e.clipboardData&&e.clipboardData.files)?Array.from(e.clipboardData.files):[];
+  const imgs=items.filter(f=>f.type.startsWith('image/'));
+  if(!imgs.length)return;
+  e.preventDefault();
+  if(pasteTarget==='outcome'&&outcomeTargetId){
+    const ent=journal.find(x=>x.id===outcomeTargetId);
+    if(ent){const url=await outcomeCapture(imgs[0]); if(url){ent.outcomeImg=url; saveJournal(); renderJournal();}}
+    pasteTarget='charts';
+    return;
+  }
+  handleFiles(imgs,pasteTarget);
+});
+
+function loadImage(file){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=()=>rej(new Error('read'));r.onload=()=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>rej(new Error('decode'));im.src=r.result;};r.readAsDataURL(file);});}
+async function processImage(file){
+  try{
+    const img=await loadImage(file);
+    const maxDim=1200;
+    let w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+    const scale=Math.min(1,maxDim/Math.max(w,h));
+    w=Math.max(1,Math.round(w*scale)); h=Math.max(1,Math.round(h*scale));
+    const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+    cv.getContext('2d').drawImage(img,0,0,w,h);
+    const url=cv.toDataURL('image/jpeg',0.8);
+    return {b64:url.split(',')[1],mediaType:'image/jpeg',url};
+  }catch(e){
+    const url=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(file);});
+    return {b64:url.split(',')[1],mediaType:file.type,url};
+  }
+}
+async function handleFiles(list,target){
+  const files=Array.from(list).filter(f=>f.type.startsWith('image/'));
+  for(const f of files){
+    if(target==='ctx'){if(ctxImages.length>=MAX_CTX){showErr('Up to '+MAX_CTX+' data screenshots.');break;}}
+    else{if(images.length>=MAX_IMG){showErr('Up to '+MAX_IMG+' charts. Remove one to add more.');break;}}
+    const proc=await processImage(f);
+    const obj=Object.assign({id:uid()},proc);
+    if(target==='ctx'){ctxImages.push(obj);renderCtxGallery();}
+    else{obj.tf='';images.push(obj);renderGallery();}
+  }
+}
+function removeImg(id){images=images.filter(im=>im.id!==id);renderGallery();}
+function removeCtx(id){ctxImages=ctxImages.filter(im=>im.id!==id);renderCtxGallery();}
+function setTf(id,val){const im=images.find(x=>x.id===id);if(im)im.tf=val;}
+function renderGallery(){
+  const g=document.getElementById('gallery');
+  g.innerHTML=images.map(im=>`<div class="thumb">
+    <div class="imgwrap"><img src="${im.url}"><button class="x" onclick="removeImg('${im.id}')">✕</button></div>
+    <input class="tf" value="${esc(im.tf)}" placeholder="timeframe e.g. 4H, 1H, 15m"
+      oninput="setTf('${im.id}',this.value)">
+  </div>`).join('');
+  document.getElementById('chartCount').textContent=images.length?`${images.length} / ${MAX_IMG}`:'';
+}
+function renderCtxGallery(){
+  const g=document.getElementById('ctxGallery');
+  g.innerHTML=ctxImages.map(im=>`<div class="thumb">
+    <div class="imgwrap"><img src="${im.url}"><button class="x" onclick="removeCtx('${im.id}')">✕</button></div>
+  </div>`).join('');
+}
+
+/* ---------- analysis ---------- */
+function fmtNum(n){
+  if(n==null||isNaN(n))return '—';
+  const a=Math.abs(n);
+  if(a>=1000)return n.toLocaleString('en-US',{maximumFractionDigits:2});
+  if(a>=1)return n.toLocaleString('en-US',{maximumFractionDigits:4});
+  return n.toLocaleString('en-US',{maximumFractionDigits:8});
+}
+function money(n){if(n==null||isNaN(n))return '—';return '$'+n.toLocaleString('en-US',{maximumFractionDigits:2});}
+
+function showErr(msg){document.getElementById('errBox').innerHTML=`<div class="err">${esc(msg)}</div>`;}
+function clearErr(){document.getElementById('errBox').innerHTML='';}
+
+async function llm(content){
+  const accessCode=document.getElementById('access').value.trim();
+  const res=await fetch("/api/analyze",{
+    method:"POST",
+    headers:Object.assign({"Content-Type":"application/json"}, accessCode?{"x-access-code":accessCode}:{}),
+    body:JSON.stringify({content})
+  });
+  let data;
+  try{data=await res.json();}catch(e){throw new Error('The service returned an unreadable response — usually the images were too large. Remove one and try again.');}
+  if(!res.ok||(data&&data.error)){const m=(data&&data.error&&(data.error.message||data.error.type||data.error))||('HTTP '+res.status);throw new Error(''+m);}
+  return data;
+}
+
+async function runAnalysis(){
+  clearErr();
+  if(!images.length){showErr('Upload at least one chart first.');return;}
+  const btn=document.getElementById('analyzeBtn');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span>Reading the charts…';
+
+  const chosen=concepts.filter(c=>selected.has(c.id));
+  const conceptsText=chosen.length
+    ? chosen.map((c,i)=>`${i+1}. ${c.title}${c.body?' — '+c.body:''}`).join('\n')
+    : '(No specific concepts selected. Use sound general technical & price-action analysis.)';
+  const instructions=document.getElementById('instructions').value.trim();
+  const funding=document.getElementById('funding').value.trim();
+  const netflow=document.getElementById('netflow').value.trim();
+  let ctx='';
+  if(funding!=='')ctx+=`- Funding rate: ${funding}%. Positive = longs pay shorts (long-crowded); strongly positive warns of squeeze/reversal risk against longs; negative = short-crowded.\n`;
+  if(netflow!=='')ctx+=`- Net exchange flow: ${netflow}. Net INTO exchanges = potential sell pressure (bearish lean); net OUT = accumulation (bullish lean).\n`;
+  if(ctxImages.length)ctx+=`- ${ctxImages.length} market-data screenshot(s) provided (labelled MARKET DATA below) — read funding / net inflow / open interest / ATR values from them. If an ATR (Average True Range) value is visible, convert it to % of price using the chart price (ATR% = ATR ÷ price × 100) and use that to set the volatility reading.\n`;
+  const hasCtx=ctx!=='';
+  const multi=images.length>1;
+
+  const sys=`You are WASTED_DON, a precise crypto chart analyst. You read ${multi?'several charts of the SAME asset across different timeframes':'a chart screenshot'} through the trader's own framework below and ALWAYS produce ONE best-read trade plan with a quality grade — you never refuse to give an entry.
+
+${multi?`MULTI-TIMEFRAME: Use the HIGHER timeframe chart(s) to set directional bias and map major liquidity, then use the LOWEST timeframe chart for the precise execution entry, stop and targets. The final entry/stop/targets must come from the lowest timeframe shown. If timeframes conflict, lower the grade and explain.\n`:''}
+Grade every read honestly:
+- "A" = the setup cleanly meets the framework's key conditions${multi?' and the timeframes agree':''}; high conviction.
+- "B" = a workable setup but one or two conditions are weak or unconfirmed.
+- "C" = the framework is mostly NOT satisfied. Do NOT give a tradeable entry: this is a wait. Explain what is missing.
+
+Also classify trade readiness: "reaction" = the entry TRIGGERS (liquidity grab/sweep, displacement, and/or BOS/CHOCH) have already fired, so price has confirmed and the trader is reacting to a move; "anticipation" = directional bias and location (e.g. premium/discount) are set but those triggers have NOT fired yet, so taking it means anticipating. Put this in trade_state with a one-line state_reason. Always report the dealing range you used (range_high and range_low) so premium/discount is auditable, and list the liquidity_levels you see with their prices. If you cannot read the price axis, set axis_readable false and still give best estimates. BEFORE giving a tradeable entry, check for UN-SWEPT liquidity resting against the entry: for a long, a clear liquidity pool (equal lows, prior lows, an obvious swing low) sitting BELOW the entry that has NOT been swept; for a short, resting liquidity ABOVE the entry. If such un-swept liquidity exists against the entry, do NOT provide an entry — set liquidity_block=true and in liquidity_block_note name the level and say price should sweep that liquidity first. If nothing un-swept threatens the entry, set liquidity_block=false and proceed normally. Also check for FOMO / chasing: if price has already run a long way from the setup origin with no pullback, or the entry would be mid-move far from a valid FVG/OB/value zone, or the R:R is poor because the clean entry was already missed, treat it as a chase — set fomo_block=true and in fomo_note say to wait for a pullback into a valid zone. Only flag CLEAR chases, not every strong move. IMPORTANT: whenever you withhold an entry for ANY reason (liquidity_block, fomo_block, or grade C), you MUST give concrete waiting instructions with real prices: fill wait_zone_low and wait_zone_high (the actual price zone to wait for), wait_zone_label (what that zone is), wait_trigger (the exact confirmation to see at that zone), wait_invalidation (the price that kills the idea), and prospective_entry / prospective_stop (what you would take if the zone and trigger are met). Never say only "wait for a pullback" — always name where and what to. Also set alert_price to the single best price to put a chart alert at (usually the near edge of the wait zone, the price that would first tell the trader to look again) and alert_note for what to do when it fires. Read prices off the visible axis as accurately as you can. ${hasCtx?'You are also given perp market context (funding rate and/or net exchange flow) — treat it as a positioning/sentiment input that confirms or tempers the price read, not as a price level. ':''}Output ONLY raw JSON, no markdown, no commentary.
+
+TRADER'S FRAMEWORK / CONCEPTS:
+${conceptsText}`;
+
+  const userText=`${multi?'These charts are the same asset on different timeframes (labelled above each image).':'Analyze this crypto chart.'} ALWAYS give a directional best read (never refuse).
+${instructions?'Trader note: '+instructions+'\n':''}${hasCtx?'\nMARKET CONTEXT (perp positioning & flow — weigh these into bias and grade; they confirm or temper the price read but do not override clear structure):\n'+ctx:''}
+Return ONLY this JSON object (no code fences):
+{
+ "asset": "ticker if readable e.g. BTC/USDT, else null",
+ "timeframe": "the EXECUTION timeframe the entry is taken on, else null",
+ "direction": "long" | "short",
+ "grade": "A" | "B" | "C",
+ "entry": number,
+ "stop_loss": number,
+ "take_profits": [number, ...]  (1 to 5 targets, ordered nearest first),
+ "range_high": number or null (swing HIGH of the dealing range you used to judge premium/discount),
+ "range_low": number or null (swing LOW of that same range),
+ "axis_readable": true|false (false if you could not clearly read the price axis),
+ "volatility": "low" | "medium" | "high" (from ATR% if given or an ATR indicator screenshot: under ~1% low, ~1-4% medium, over ~4% high, judged for the timeframe; else estimate visually from candle size/wicks),
+ "volatility_note": "short note e.g. 'ATR ~2.5% — normal' or 'visual estimate'; if you read ATR off a screenshot state the ATR% you computed",
+ "atr_pct": number or null (the ATR as a % of price, from the value given OR read off a screenshot; null if unknown),
+ "liquidity_levels": [ {"label": "e.g. equal lows / PDH / swing high", "price": number}, ... ]  (key levels you see; [] if none),
+ "liquidity_block": true|false (true if un-swept liquidity sits against the entry — below a long / above a short — so no entry should be given yet),
+ "liquidity_block_note": "if liquidity_block is true, name the un-swept level and say to wait for the sweep; else empty string",
+ "fomo_block": true|false (true if this is a late chase / FOMO entry — price already ran far with no pullback, entry mid-move far from a valid zone, or poor R:R because the clean entry was missed),
+ "fomo_note": "if fomo_block is true, say it's a chase and to wait for a pullback into a valid zone; else empty string",
+ "wait_zone_low": number or null (if NO entry is given: the LOW price of the zone to wait for price to reach),
+ "wait_zone_high": number or null (if NO entry is given: the HIGH price of that zone),
+ "wait_zone_label": "what that zone is, e.g. '15m FVG' / 'order block' / 'discount half of range' (empty if not applicable)",
+ "wait_trigger": "the specific confirmation to see AT that zone before entering, e.g. 'bullish engulfing close back above 0.01820' (empty if not applicable)",
+ "wait_invalidation": "the price/condition that kills the idea entirely, e.g. 'close below 0.01590' (empty if not applicable)",
+ "alert_price": number or null (if NO entry is given: the single best price to set a price alert at so the trader is notified when the setup is worth checking again — usually the near edge of the wait zone),
+ "alert_note": "one short line on what to do when that alert fires, e.g. 're-analyze for a bullish close back above the zone' (empty if not applicable)",
+ "alert_price": number or null (if NO entry is given: the single best price to set a chart alert at, so the trader is notified when price reaches the wait zone),
+ "alert_note": "one short line on what to do when that alert fires, e.g. 're-check for a bullish close back above the zone' (empty if not applicable)",
+ "prospective_entry": number or null (the entry price you would take IF price reaches the zone and the trigger fires),
+ "prospective_stop": number or null (the stop you would use in that case),
+ "confidence": integer 0-100,
+ "checklist": [ {"label": "condition name", "met": true|false}, ... ]  (one per key framework condition${multi?', include a "Timeframes aligned" item':''}${hasCtx?', plus "Funding supports direction" and/or "Flow supports direction" for any market-context value given':''}),
+ "trade_state": "reaction" | "anticipation",
+ "state_reason": "one short sentence on why it's reaction or anticipation",
+ "setup": "one concise sentence naming the setup",
+ "reasoning": "2-4 sentences${multi?', noting what each timeframe contributes':''}${hasCtx?'; mention whether funding/flow agree with the entry':''}",
+ "missing": "what's not yet confirmed or what would upgrade the grade (empty if grade A)",
+ "invalidation": "one sentence: what price action would invalidate this",
+ "note": "any caveat, or empty string"
+}
+All prices must be plain numbers (no symbols/commas). Keep every text field short (reasoning max 3 short sentences). Do not use double-quote characters or backslashes inside any string value.`;
+
+  // build multimodal content: framework first, then charts, then data, then the request
+  const content=[];
+  content.push({type:"text",text:sys});
+  images.forEach((im,i)=>{
+    content.push({type:"text",text:im.tf?`Chart ${i+1} — timeframe ${im.tf}:`:`Chart ${i+1}:`});
+    content.push({type:"image",source:{type:"base64",media_type:im.mediaType,data:im.b64}});
+  });
+  ctxImages.forEach((im,i)=>{
+    content.push({type:"text",text:`MARKET DATA ${i+1} (funding / net inflow / OI / ATR — read the values, treat as context not price levels):`});
+    content.push({type:"image",source:{type:"base64",media_type:im.mediaType,data:im.b64}});
+  });
+  content.push({type:"text",text:userText});
+
+  try{
+    const data=await llm(content);
+    const text=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+    if(!text)throw new Error('The model returned an empty reply. Try again, or use fewer images.');
+    const parsed=parseJSON(text);
+    if(!parsed)throw new Error('Could not read a clean ticket — the reply may have been cut off. Try fewer images. (Reply began: "'+text.slice(0,70).replace(/\s+/g,' ')+'…")');
+    const thumb=images[0]?await makeThumb(images[0].url):null;
+    logMeta={funding, netflow, conceptTitles:chosen.map(c=>c.title), thumb};
+    renderTicket(parsed);
+  }catch(err){
+    showErr(err.message||'Something went wrong running the analysis.');
+  }finally{
+    btn.disabled=false; btn.textContent='Analyze charts';
+  }
+}
+
+function parseJSON(t){
+  if(!t)return null;
+  let s=t.replace(/```json/gi,'').replace(/```/g,'').trim();
+  const a=s.indexOf('{'); if(a<0)return null;
+  const b=s.lastIndexOf('}');
+  if(b>a){try{return JSON.parse(s.slice(a,b+1));}catch(e){}}
+  // repair truncated JSON: balance brackets from the first {
+  let frag=s.slice(a);
+  let c=0,sq=0,inStr=false,prev='';
+  for(const ch of frag){
+    if(ch==='"'&&prev!=='\\')inStr=!inStr;
+    else if(!inStr){if(ch==='{')c++;else if(ch==='}')c--;else if(ch==='[')sq++;else if(ch===']')sq--;}
+    prev=ch;
+  }
+  let out=frag;
+  if(inStr)out+='"';
+  out=out.replace(/,\s*$/,'').replace(/:\s*$/,':null');
+  while(sq-->0)out+=']';
+  while(c-->0)out+='}';
+  try{return JSON.parse(out);}catch(e){return null;}
+}
+
+function coinRecordWarning(asset){
+  const c=deriveCoin(asset); if(!c)return '';
+  const rows=journal.filter(e=>(e.coin||deriveCoin(e.asset))===c);
+  const w=rows.filter(e=>e.outcome==='win').length, l=rows.filter(e=>e.outcome==='loss').length;
+  const dec=w+l;
+  if(rows.length<10||dec===0)return '';
+  const wr=Math.round(w/dec*100);
+  if(wr>=20)return '';
+  return `<div class="badrec">⚠ Bad record on ${esc(c)} — ${rows.length} trades logged, only ${wr}% win rate (${w}W / ${l}L). Your own history says this coin is not working for you. Treat any setup here with heavy scepticism, size down, or skip it.</div>`;
+}
+function renderTicket(r){
+  let dir=(r.direction||'').toLowerCase();
+  if(dir!=='long'&&dir!=='short')dir='long';
+  const grade=(r.grade||'C').toUpperCase().charAt(0);
+  const cGrade=(grade==='C');
+  if(r.liquidity_block||r.fomo_block||cGrade){
+    const notes=[];
+    if(r.liquidity_block)notes.push(r.liquidity_block_note||'Un-swept liquidity is resting against the entry — wait for it to be swept before entering.');
+    if(r.fomo_block)notes.push(r.fomo_note||'This looks like a late chase (FOMO) — wait for a pullback into a valid zone.');
+    if(cGrade)notes.push(r.missing?('Grade C — your framework is mostly not met. '+r.missing):'Grade C — your framework is mostly not met here. No entry: wait for the setup to form.');
+    const label=r.liquidity_block?'⏸ No entry — wait for the sweep':(r.fomo_block?'⏸ No entry — don’t chase, wait for a pullback':'⏸ No entry — setup not formed');
+
+    const wLo=num(r.wait_zone_low), wHi=num(r.wait_zone_high);
+    const pEntry=num(r.prospective_entry), pStop=num(r.prospective_stop);
+    let pRR=null;
+    const tpsW=Array.isArray(r.take_profits)?r.take_profits.map(num).filter(x=>x!=null):[];
+    if(pEntry!=null&&pStop!=null&&tpsW[0]!=null&&Math.abs(pEntry-pStop)>0)pRR=Math.abs(tpsW[0]-pEntry)/Math.abs(pEntry-pStop);
+    const rows=[];
+    if(wLo!=null&&wHi!=null)rows.push(['Wait for price at', fmtNum(Math.min(wLo,wHi))+' – '+fmtNum(Math.max(wLo,wHi))+(r.wait_zone_label?'  ('+r.wait_zone_label+')':'')]);
+    else if(r.wait_zone_label)rows.push(['Wait for', r.wait_zone_label]);
+    if(r.wait_trigger)rows.push(['Then confirm', r.wait_trigger]);
+    if(pEntry!=null)rows.push(['Entry if confirmed', fmtNum(pEntry)]);
+    if(pStop!=null)rows.push(['Stop would be', fmtNum(pStop)]);
+    if(tpsW.length)rows.push(['Target', fmtNum(tpsW[0])+(pRR!=null?'   ('+pRR.toFixed(2)+'R)':'')]);
+    if(r.wait_invalidation)rows.push(['Idea dies if', r.wait_invalidation]);
+    const alertP=num(r.alert_price);
+    const alertHtml=(alertP!=null)?`<div class="alertbox"><div class="ab-k">🔔 Set your alert at</div><div class="ab-v">${fmtNum(alertP)}</div>${r.alert_note?`<div class="ab-n">${esc(r.alert_note)}</div>`:''}</div>`:'';
+    const waitHtml=rows.length?`<div class="block"><div class="k">Your wait plan</div></div>
+      <div class="audit" style="margin-bottom:16px">${rows.map(a=>`<div class="arow"><span class="ak">${esc(a[0])}</span><span class="av">${esc(a[1])}</span></div>`).join('')}</div>`:'';
+    document.getElementById('ticket').innerHTML=`
+      <div class="meta"><span class="dir-tab dir-none">${label}</span>
+        ${r.asset?`<span class="asset">${esc(r.asset)}</span>`:''}
+        ${r.timeframe?`<span class="tf">${esc(r.timeframe)}</span>`:''}</div>
+      ${coinRecordWarning(r.asset)}
+      ${notes.map(n=>`<div class="warn" style="margin-bottom:14px">${esc(n)}</div>`).join('')}
+      ${alertHtml}
+      ${waitHtml}
+      ${(Array.isArray(r.checklist)&&r.checklist.length)?`<div class="block"><div class="k">Framework gates</div></div><div class="checklist">${r.checklist.map(c=>{const met=!!c.met;return `<div class="ck ${met?'met':'no'}"><span class="mk">${met?'✓':'✕'}</span><span class="lbl">${esc(c.label||'')}</span></div>`;}).join('')}</div>`:''}
+      ${r.reasoning?`<div class="block"><div class="k">Why</div><p>${esc(r.reasoning)}</p></div>`:''}
+      ${r.invalidation?`<div class="block"><div class="k">What to watch</div><p>${esc(r.invalidation)}</p></div>`:''}`;
+    lastRead=null;
+    return;
+  }
+  const acct=parseFloat(document.getElementById('account').value);
+  const riskPct=parseFloat(document.getElementById('risk').value);
+  const entry=num(r.entry),sl=num(r.stop_loss);
+  const tps=Array.isArray(r.take_profits)?r.take_profits.map(num).filter(x=>x!=null):[];
+  const tp1=tps[0];
+
+  // calcs
+  let riskAmt=null,stopDist=null,qty=null,notional=null,rr=null;
+  if(entry!=null&&sl!=null){stopDist=Math.abs(entry-sl);}
+  if(acct>0&&riskPct>0)riskAmt=acct*riskPct/100;
+  if(riskAmt!=null&&stopDist>0){qty=riskAmt/stopDist;notional=qty*entry;}
+  if(entry!=null&&tp1!=null&&stopDist>0){rr=Math.abs(tp1-entry)/stopDist;}
+
+  let riskPctBar=50,rewardPctBar=50;
+  if(rr!=null){const tot=1+rr;riskPctBar=100/tot;rewardPctBar=100*rr/tot;}
+
+  const gradeWord={A:'High conviction',B:'Workable',C:'Speculative'}[grade]||'';
+  const checklist=Array.isArray(r.checklist)?r.checklist:[];
+  const ckHtml=checklist.length?`<div class="checklist">${checklist.map(c=>{
+    const met=!!c.met;return `<div class="ck ${met?'met':'no'}"><span class="mk">${met?'✓':'✕'}</span><span class="lbl">${esc(c.label||'')}</span></div>`;
+  }).join('')}</div>`:'';
+
+  const state=deriveState(r);
+  const isGo=state==='reaction';
+  const stateReason=r.state_reason||(isGo
+    ? 'Trigger conditions have fired — you are reacting to a confirmed move.'
+    : 'Bias and location are set, but the entry triggers (sweep / displacement / BOS-CHOCH) have not fired yet.');
+  const readiHtml=`<div class="readi readi-${isGo?'go':'wait'}">
+    <div class="ri">${isGo?'✓':'⏳'}</div>
+    <div><div class="rt">${isGo?'Reaction — confirmation present':'Anticipating — waiting for confirmation'}</div>
+    <div class="rs">${esc(stateReason)}</div></div></div>`;
+
+  // auditable levels
+  const rh=num(r.range_high), rl=num(r.range_low);
+  let auditRows=[];
+  if(r.volatility){
+    const vlow=(''+r.volatility).toLowerCase()==='low';
+    auditRows.push(['Volatility', (''+r.volatility).toUpperCase()+(r.volatility_note?' · '+r.volatility_note:''), vlow?'low — setup may lack room':'']);
+  }
+  if(rh!=null&&rl!=null&&rh!==rl){
+    const lo=Math.min(rh,rl),hi=Math.max(rh,rl),mid=(hi+lo)/2;
+    auditRows.push(['Dealing range', fmtNum(lo)+' – '+fmtNum(hi)]);
+    auditRows.push(['Midpoint (50%)', fmtNum(mid)]);
+    if(entry!=null){
+      const pos=(entry-lo)/(hi-lo)*100;
+      const half=pos>=50?'premium':'discount';
+      const want=dir==='long'?'discount':'premium';
+      auditRows.push(['Entry location', pos.toFixed(0)+'% · '+half, half===want?'':'wrong half for '+dir]);
+    }
+  }
+  const liq=Array.isArray(r.liquidity_levels)?r.liquidity_levels.filter(x=>x&&x.label&&x.price!=null):[];
+  let checks=[];
+  if(entry!=null&&sl!=null){const sideOk=dir==='long'?sl<entry:sl>entry; if(!sideOk)checks.push('Stop is on the wrong side of entry for a '+dir+'.');}
+  if(rr!=null&&rr<1)checks.push('Reward is smaller than risk (R:R below 1).');
+  if(r.axis_readable===false)checks.push('Price axis was hard to read — treat these levels as estimates.');
+  const auditHtml=(auditRows.length||liq.length)?`<div class="audit">
+    ${auditRows.map(a=>`<div class="arow"><span class="ak">${a[0]}</span><span class="av${a[2]?' bad':''}">${a[1]}${a[2]?' ⚠ '+a[2]:''}</span></div>`).join('')}
+    ${liq.length?`<div class="arow" style="margin-top:4px"><span class="ak">Liquidity</span><span class="av">${liq.map(l=>esc(l.label)+' '+fmtNum(num(l.price))).join('  ·  ')}</span></div>`:''}
+  </div>`:'';
+  const checksHtml=checks.length?`<div class="warn">Levels check: ${checks.map(esc).join(' ')}</div>`:'';
+
+  lastRead={asset:r.asset||null, timeframe:r.timeframe||null, dir, grade, state, entry, sl, tps, rr, confidence:(r.confidence!=null?r.confidence:null), volatility:r.volatility||null};
+
+  // ATR-based stop & size at fixed 1.5x (ATR% comes from the model, driven by the ATR concept)
+  let atrPct=num(r.atr_pct);
+  let beLine='';
+  if(entry!=null&&sl!=null&&stopDist>0){
+    const beTrig=dir==='long'?entry+stopDist:entry-stopDist;
+    beLine=`<div class="audit" style="margin-bottom:16px"><div class="arow"><span class="ak">⚑ Move stop to breakeven at (1R)</span><span class="av" style="color:var(--info)">${fmtNum(beTrig)}</span></div></div>`;
+  }
+  let atrPanel='';
+  if(!isNaN(atrPct)&&atrPct>0&&entry!=null){
+    const mult=1.5;
+    const adist=atrPct/100*entry*mult;
+    const aStop=dir==='long'?entry-adist:entry+adist;
+    const aQty=(riskAmt!=null&&adist>0)?riskAmt/adist:null;
+    const aNotional=aQty!=null?aQty*entry:null;
+    const aRR=(tp1!=null&&adist>0)?Math.abs(tp1-entry)/adist:null;
+    atrPanel=`<div class="block"><div class="k">ATR stop &amp; size · 1.5× ATR</div></div>
+      <div class="stats">
+        <div class="stat"><div class="k">ATR stop</div><div class="v">${fmtNum(aStop)}</div></div>
+        <div class="stat"><div class="k">Stop distance</div><div class="v">${fmtNum(adist)}${aRR!=null?' · '+aRR.toFixed(2)+'R':''}</div></div>
+        <div class="stat"><div class="k">Size (ATR stop)</div><div class="v">${aQty!=null?fmtNum(aQty)+(r.asset?' '+r.asset.split('/')[0]:' u'):'—'}</div></div>
+        <div class="stat"><div class="k">Notional</div><div class="v">${money(aNotional)}</div></div>
+      </div>
+      <div class="hint" style="margin:-6px 0 16px">Stop at 1.5× ATR (${atrPct}% of price) — a volatility-based alternative to the chart-read stop above.${(acct>0&&riskPct>0)?'':' Add account balance &amp; risk % for the size.'}</div>`;
+  }
+
+  document.getElementById('ticket').innerHTML=`
+    <div class="meta">
+      <span class="dir-tab dir-${dir}">${dir==='long'?'▲ Long':'▼ Short'}</span>
+      <span class="grade grade-${grade}"><span class="g">${grade}</span>${gradeWord}</span>
+      ${r.asset?`<span class="asset">${esc(r.asset)}</span>`:''}
+      ${r.timeframe?`<span class="tf">${esc(r.timeframe)}</span>`:''}
+    </div>
+    ${coinRecordWarning(r.asset)}
+
+    <div class="levels">
+      <div class="lvl entry"><div class="k">Entry</div><div class="v">${fmtNum(entry)}</div></div>
+      <div class="lvl sl"><div class="k">Stop</div><div class="v">${fmtNum(sl)}</div></div>
+      ${tps.length?`<div class="lvl tp"><div class="k">Target${tps.length>1?' 1':''}</div><div class="v">${fmtNum(tp1)}</div></div>`:''}
+    </div>
+    ${tps.length>1?`<div class="levels">${tps.slice(1).map((t,i)=>`<div class="lvl tp"><div class="k">Target ${i+2}</div><div class="v">${fmtNum(t)}</div></div>`).join('')}</div>`:''}
+
+    <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Risk ↔ Reward${rr!=null?` · ${rr.toFixed(2)}R`:''}</div>
+    <div class="rrbar"><div class="risk" style="width:${riskPctBar}%"></div><div class="reward" style="width:${rewardPctBar}%"></div></div>
+
+    <div class="stats">
+      <div class="stat"><div class="k">Risk : Reward</div><div class="v">${rr!=null?'1 : '+rr.toFixed(2):'—'}</div></div>
+      <div class="stat"><div class="k">Risk amount</div><div class="v">${money(riskAmt)}</div></div>
+      <div class="stat"><div class="k">Position size</div><div class="v">${qty!=null?fmtNum(qty)+(r.asset?' '+(r.asset.split('/')[0]):' units'):'—'}</div></div>
+      <div class="stat"><div class="k">Notional</div><div class="v">${money(notional)}</div></div>
+    </div>
+    ${(acct>0&&riskPct>0)?'':'<div class="warn" style="margin-bottom:16px">Add your account balance and risk % (left) to get position size and dollar risk.</div>'}
+    ${beLine}
+    ${atrPanel}
+
+    <div class="conf">
+      <span style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Confidence</span>
+      <div class="track"><div class="fill" style="width:${Math.max(0,Math.min(100,r.confidence||0))}%"></div></div>
+      <span class="pct">${r.confidence!=null?r.confidence+'%':'—'}</span>
+    </div>
+
+    ${checklist.length?`<div class="block"><div class="k">Framework gates</div></div>${ckHtml}${readiHtml}`:readiHtml}
+    ${auditHtml}
+    ${checksHtml}
+
+    ${r.setup?`<div class="block"><div class="k">Setup</div><p>${esc(r.setup)}</p></div>`:''}
+    <div class="block"><div class="k">Reasoning</div><p>${esc(r.reasoning||'')}</p></div>
+    ${r.missing?`<div class="block"><div class="k">To upgrade this read</div><p>${esc(r.missing)}</p></div>`:''}
+    ${r.invalidation?`<div class="block"><div class="k">Invalidation</div><p>${esc(r.invalidation)}</p></div>`:''}
+    ${r.note?`<div class="warn">${esc(r.note)}</div>`:''}
+    <div class="logrow"><button id="logBtn" onclick="logCurrent()">＋ Log this read to journal</button></div>`;
+}
+function num(v){const n=parseFloat(v);return isNaN(n)?null:n;}
+
+function deriveState(r){
+  let st=(r.trade_state||'').toLowerCase();
+  if(st==='reaction'||st==='anticipation')return st;
+  // fallback: infer from trigger gates in the checklist
+  const TRIG=['sweep','liquidity grab','grab','displacement','bos','choch','break of structure','change of character'];
+  const cl=Array.isArray(r.checklist)?r.checklist:[];
+  const trig=cl.filter(c=>TRIG.some(t=>(c.label||'').toLowerCase().includes(t)));
+  if(!trig.length)return 'anticipation';
+  const met=trig.filter(c=>!!c.met).length;
+  return (met*2>=trig.length)?'reaction':'anticipation';
+}
+
+/* ---------- journal ---------- */
+function makeThumb(src){return new Promise(res=>{const im=new Image();im.onload=()=>{const mx=220;const s=Math.min(1,mx/Math.max(im.width,im.height));const w=Math.max(1,Math.round(im.width*s)),h=Math.max(1,Math.round(im.height*s));const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(im,0,0,w,h);try{res(cv.toDataURL('image/jpeg',0.6));}catch(e){res(null);}};im.onerror=()=>res(null);im.src=src;});}
+
+function deriveCoin(asset){
+  if(!asset)return '';
+  let a=(''+asset).toUpperCase().trim();
+  if(a.includes('/'))return a.split('/')[0].trim();
+  return a.replace(/(USDT|USDC|BUSD|USD|PERP)$/,'').trim();
+}
+function logCurrent(){
+  if(!lastRead)return;
+  const e={id:uid(), ts:Date.now(),
+    asset:lastRead.asset, coin:deriveCoin(lastRead.asset), timeframe:lastRead.timeframe, direction:lastRead.dir,
+    grade:lastRead.grade, state:lastRead.state, entry:lastRead.entry, stop:lastRead.sl,
+    tps:lastRead.tps||[], rr:lastRead.rr, confidence:lastRead.confidence,
+    concepts:logMeta.conceptTitles||[], funding:logMeta.funding||'', netflow:logMeta.netflow||'',
+    volatility:lastRead.volatility||null, thumb:logMeta.thumb||null, outcome:null, rResult:null, note:''};
+  journal.unshift(e); saveJournal(); renderJournal();
+  const b=document.getElementById('logBtn'); if(b){b.textContent='✓ Logged to journal'; b.disabled=true;}
+}
+function setOutcome(id,o){const e=journal.find(x=>x.id===id); if(!e)return; const prev=e.outcome; e.outcome=(e.outcome===o?null:o); if(e.outcome!==prev){e.solution=null;e.solutionKind=null;} saveJournal(); renderJournal();}
+function setR(id,val){const e=journal.find(x=>x.id===id); if(!e)return; const n=parseFloat(val); e.rResult=isNaN(n)?null:n; saveJournal(); renderStats();}
+function setCoin(id,val){const e=journal.find(x=>x.id===id); if(!e)return; e.coin=(''+val).trim().toUpperCase(); saveJournal(); renderStats();}
+function setNote(id,val){const e=journal.find(x=>x.id===id); if(!e)return; e.note=val; saveJournal();}
+async function coachTrade(id){
+  const e=journal.find(x=>x.id===id); if(!e)return;
+  const win=e.outcome==='win', loss=e.outcome==='loss';
+  if(!win&&!loss)return;
+  const btn=document.getElementById('coach_'+id);
+  if(btn){btn.disabled=true; btn.textContent='Thinking…';}
+  const tp=(e.tps&&e.tps[0]!=null)?e.tps[0]:null;
+  const facts=`Trade: ${e.direction||'?'} ${e.coin||deriveCoin(e.asset)||''} ${e.timeframe||''}; grade ${e.grade||'?'}; state ${e.state||'?'} (reaction = confirmation was present, anticipation = entered before confirmation); entry ${e.entry!=null?e.entry:'?'}, stop ${e.stop!=null?e.stop:'?'}, target ${tp!=null?tp:'?'}, R:R ${e.rr!=null?e.rr.toFixed(2):'?'}; outcome ${e.outcome}${typeof e.rResult==='number'?' ('+e.rResult+'R)':''}.${e.note&&e.note.trim()?' Trader note: "'+e.note.trim()+'"':''}`;
+  const prompt=loss
+    ? `You are a sharp crypto trading coach. This trade was a LOSS. You are given the trader's planned ticket, the SETUP screenshot from when they entered, and — if provided — an OUTCOME screenshot showing how price actually played out afterwards. Compare the PLAN (entry/stop/target) against what actually happened on the outcome chart, and give a SHORT actionable diagnosis (2-4 sentences): what went wrong (e.g. stop too tight and swept before price ran to target, entered before confirmation, target too far, wrong direction) and what to do differently next time. Explicitly consider whether this was a FOMO / chase entry (entered late after a big move, far from a valid zone) and say so if it was. Be concrete and reference the levels. No filler or disclaimers.\n\n${facts}`
+    : `You are a sharp crypto trading coach. This trade was a WIN. Using the trade details and the setup screenshot, comment on what was done RIGHT (2-4 sentences): which parts of the setup and rules were followed correctly and worth repeating. Reference the entry, stop and target. Be specific and reinforcing. No filler or disclaimers.\n\n${facts}`;
+  const content=[{type:'text',text:prompt}];
+  if(e.thumb){try{content.push({type:'text',text:'SETUP screenshot (at entry):'});content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:e.thumb.split(',')[1]}});}catch(_){}}
+  if(loss&&e.outcomeImg){try{content.push({type:'text',text:'OUTCOME screenshot (how it actually played out):'});content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:e.outcomeImg.split(',')[1]}});}catch(_){}}
+  try{
+    const data=await llm(content);
+    const text=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+    e.solution=text||'(No suggestion returned — try again.)';
+  }catch(err){
+    e.solution='Could not get a suggestion: '+(err.message||'error');
+  }
+  e.solutionKind=win?'worked':'fix';
+  saveJournal(); renderJournal();
+}
+function delEntry(id){journal=journal.filter(x=>x.id!==id); saveJournal(); renderJournal();}
+
+let outcomeTargetId=null;
+function pickOutcome(id){outcomeTargetId=id; document.getElementById('outcomeFile').click();}
+function armOutcomePaste(id){outcomeTargetId=id; pasteTarget='outcome'; showJournalMsg('Now press ⌘/Ctrl+V to paste the outcome screenshot.');}
+async function outcomeCapture(file){
+  try{
+    const img=await loadImage(file);
+    const mx=980; const s=Math.min(1,mx/Math.max(img.width,img.height));
+    const w=Math.max(1,Math.round(img.width*s)),h=Math.max(1,Math.round(img.height*s));
+    const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);
+    return cv.toDataURL('image/jpeg',0.72);
+  }catch(e){return null;}
+}
+async function handleOutcomeFile(ev){
+  const f=ev.target.files[0]; ev.target.value='';
+  if(!f||!f.type.startsWith('image/')||!outcomeTargetId)return;
+  const e=journal.find(x=>x.id===outcomeTargetId); if(!e)return;
+  const url=await outcomeCapture(f);
+  if(url){e.outcomeImg=url; saveJournal(); renderJournal();}
+}
+function removeOutcomeImg(id){const e=journal.find(x=>x.id===id); if(!e)return; e.outcomeImg=null; saveJournal(); renderJournal();}
+
+function computeStats(list){
+  const taken=list.filter(e=>['win','loss','be'].includes(e.outcome));
+  const wins=list.filter(e=>e.outcome==='win').length;
+  const losses=list.filter(e=>e.outcome==='loss').length;
+  const wr=(wins+losses)>0?Math.round(wins/(wins+losses)*100):null;
+  const rs=list.filter(e=>typeof e.rResult==='number').map(e=>e.rResult);
+  const avgR=rs.length?rs.reduce((a,b)=>a+b,0)/rs.length:null;
+  const byGrade={};['A','B','C'].forEach(g=>{const s=list.filter(e=>e.grade===g);const w=s.filter(e=>e.outcome==='win').length,l=s.filter(e=>e.outcome==='loss').length;byGrade[g]=(w+l)>0?Math.round(w/(w+l)*100):null;});
+  const byState={};['reaction','anticipation'].forEach(st=>{const s=list.filter(e=>e.state===st);const w=s.filter(e=>e.outcome==='win').length,l=s.filter(e=>e.outcome==='loss').length;byState[st]=(w+l)>0?Math.round(w/(w+l)*100):null;});
+  const dir={long:list.filter(e=>e.direction==='long').length, short:list.filter(e=>e.direction==='short').length};
+  const stateCount={reaction:list.filter(e=>e.state==='reaction').length, anticipation:list.filter(e=>e.state==='anticipation').length};
+  const stTot=stateCount.reaction+stateCount.anticipation;
+  const statePct={reaction:stTot?Math.round(stateCount.reaction/stTot*100):null, anticipation:stTot?Math.round(stateCount.anticipation/stTot*100):null};
+  const cm={};
+  list.forEach(e=>{const c=(e.coin||deriveCoin(e.asset)||'—'); if(!cm[c])cm[c]={coin:c,n:0,long:0,short:0,win:0,loss:0,be:0}; cm[c].n++; if(e.direction==='long')cm[c].long++; if(e.direction==='short')cm[c].short++; if(e.outcome==='win')cm[c].win++; if(e.outcome==='loss')cm[c].loss++; if(e.outcome==='be')cm[c].be++;});
+  const coins=Object.values(cm).sort((a,b)=>b.n-a.n);
+  const topCoin=coins.length?coins[0]:null;
+  return {total:list.length, taken:taken.length, wins, losses, wr, avgR, byGrade, byState, dir, stateCount, statePct, coins, topCoin};
+}
+function pct(v){return v==null?'—':v+'%';}
+function renderStats(){
+  const s=computeStats(journal);
+  const coinRows=s.coins.length?s.coins.map(c=>{const dec=c.win+c.loss; const wr=dec>0?Math.round(c.win/dec*100):null; return `<div class="crow"><span class="cc">${esc(c.coin)}</span><span class="cn">${c.n} trade${c.n>1?'s':''}</span><span class="cd"><span style="color:var(--long)">${c.win}W</span> <span style="color:var(--short)">${c.loss}L</span>${c.be?` <span style="color:var(--info)">${c.be}BE</span>`:''}</span><span class="cwr">${wr==null?'—':wr+'%'}</span><span class="cw">${c.long}L · ${c.short}S</span></div>`;}).join(''):'<div class="crow"><span class="cn">No coins logged yet.</span></div>';
+  document.getElementById('jstats').innerHTML=`<div class="jstats">
+    <div class="jstat"><div class="k">Logged</div><div class="v">${s.total}</div><div class="sub">${s.taken} taken</div></div>
+    <div class="jstat"><div class="k">Win rate</div><div class="v">${pct(s.wr)}</div><div class="sub"><span style="color:var(--long)">${s.wins}W</span> · <span style="color:var(--short)">${s.losses}L</span></div></div>
+    <div class="jstat"><div class="k">Avg result</div><div class="v">${s.avgR==null?'—':(s.avgR>=0?'+':'')+s.avgR.toFixed(2)+'R'}</div><div class="sub">tagged R only</div></div>
+    <div class="jstat"><div class="k">Direction</div><div class="v" style="font-size:14px">${s.dir.long}L · ${s.dir.short}S</div><div class="sub">long / short</div></div>
+    <div class="jstat"><div class="k">Top coin</div><div class="v" style="font-size:15px">${s.topCoin?esc(s.topCoin.coin):'—'}</div><div class="sub">${s.topCoin?s.topCoin.n+' trades':''}</div></div>
+    <div class="jstat"><div class="k">Anticipating</div><div class="v">${pct(s.statePct.anticipation)}</div><div class="sub">${s.stateCount.anticipation} trades</div></div>
+    <div class="jstat"><div class="k">Reaction</div><div class="v">${pct(s.statePct.reaction)}</div><div class="sub">${s.stateCount.reaction} trades</div></div>
+    <div class="jstat"><div class="k">Win by grade</div><div class="v" style="font-size:13px">A ${pct(s.byGrade.A)}</div><div class="sub">B ${pct(s.byGrade.B)} · C ${pct(s.byGrade.C)}</div></div>
+    <div class="jstat"><div class="k">Win by state</div><div class="v" style="font-size:12px">React ${pct(s.byState.reaction)}</div><div class="sub">Antic ${pct(s.byState.anticipation)}</div></div>
+  </div>
+  <div class="csum"><div class="csumh">By coin</div>${coinRows}</div>`;
+}
+function jtagStyle(kind,val){
+  const map={long:['rgba(52,199,123,.14)','#34c77b'],short:['rgba(240,86,91,.14)','#f0565b'],
+    A:['rgba(52,199,123,.14)','#34c77b'],B:['rgba(240,180,41,.13)','#f0b429'],C:['rgba(240,86,91,.12)','#f0565b'],
+    reaction:['rgba(52,199,123,.12)','#34c77b'],anticipation:['rgba(240,180,41,.1)','#f0b429']};
+  const c=map[val]||['var(--panel2)','var(--muted)'];
+  return `background:${c[0]};color:${c[1]}`;
+}
+function renderJournal(){
+  renderStats();
+  renderInsights(); renderLessons(); updateDue();
+  const list=document.getElementById('jlist');
+  if(!journal.length){list.innerHTML='<div class="jempty">No logged reads yet.<br>Run an analysis and tap “Log this read to journal”.</div>';return;}
+  list.innerHTML=journal.map(e=>{
+    const d=new Date(e.ts);
+    const dstr=d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+    const lv=[e.entry!=null?'E '+fmtNum(e.entry):'',e.stop!=null?'SL '+fmtNum(e.stop):'',(e.tps&&e.tps[0]!=null)?'TP '+fmtNum(e.tps[0]):'',e.rr!=null?e.rr.toFixed(2)+'R':''].filter(Boolean).join('   ');
+    const oc=e.outcome;
+    return `<div class="jrow">
+      ${e.thumb?`<img src="${e.thumb}">`:''}
+      <div class="jb">
+        <div class="jtop">
+          <span class="jtag" style="${jtagStyle('dir',e.direction)}">${e.direction==='long'?'▲ LONG':'▼ SHORT'}</span>
+          <span class="jtag" style="${jtagStyle('g',e.grade)}">${e.grade}</span>
+          <span class="jtag" style="${jtagStyle('st',e.state)}">${e.state==='reaction'?'REACTION':'ANTIC.'}</span>
+          ${e.volatility?`<span class="jtag" style="background:var(--panel2);color:var(--muted)">${(''+e.volatility).toUpperCase()} VOL</span>`:''}
+          <input class="jcoin" value="${esc(e.coin!=null?e.coin:deriveCoin(e.asset))}" placeholder="COIN" onchange="setCoin('${e.id}',this.value)" title="Coin">
+          ${e.timeframe?`<span class="jdate">${esc(e.timeframe)}</span>`:''}
+          <span class="jdate">${dstr}</span>
+          <button class="jdel" onclick="delEntry('${e.id}')" title="Delete">✕</button>
+        </div>
+        <div class="jlv">${lv||'—'}</div>
+        <div class="jout">
+          <button class="obtn ${oc==='win'?'on-win':''}" onclick="setOutcome('${e.id}','win')">Win</button>
+          <button class="obtn ${oc==='loss'?'on-loss':''}" onclick="setOutcome('${e.id}','loss')">Loss</button>
+          <button class="obtn ${oc==='be'?'on-be':''}" onclick="setOutcome('${e.id}','be')">BE</button>
+          <button class="obtn ${oc==='skip'?'on-skip':''}" onclick="setOutcome('${e.id}','skip')">Skipped</button>
+          <input class="jr" type="number" step="any" placeholder="R" value="${e.rResult!=null?e.rResult:''}" onchange="setR('${e.id}',this.value)" title="Realized R multiple">
+        </div>
+        <textarea class="jnote" placeholder="What happened / what went wrong…" onchange="setNote('${e.id}',this.value)">${esc(e.note||'')}</textarea>
+        ${oc==='loss'?`<div class="ocwrap">${e.outcomeImg?`<div class="ocprev"><img src="${e.outcomeImg}"><button class="x" onclick="removeOutcomeImg('${e.id}')">✕</button></div>`:`<button class="ocadd" onclick="pickOutcome('${e.id}')">＋ Upload outcome screenshot</button><button class="ocadd" style="margin-top:6px" onclick="armOutcomePaste('${e.id}')">or paste (⌘/Ctrl+V)</button>`}</div>`:''}
+        ${(oc==='loss'||oc==='win')?`<div class="coachrow"><button class="coachbtn ${oc==='win'?'good':''}" id="coach_${e.id}" onclick="coachTrade('${e.id}')">${e.solution?'↻ Redo':(oc==='loss'?'💡 Suggest a fix':'✓ What worked')}</button></div>`:''}
+        ${e.solution?`<div class="solution ${e.solutionKind==='worked'?'good':''}"><div class="sk">${e.solutionKind==='worked'?'What worked':'Suggested fix'}</div><p>${esc(e.solution)}</p></div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------- review · lessons · daily focus ---------- */
+async function runReview(){
+  if(journal.length<3){showJournalMsg('Log at least 3 trades before a review.');return;}
+  const btn=document.getElementById('reviewBtn'); if(btn){btn.disabled=true;btn.textContent='Reviewing…';}
+  const s=computeStats(journal);
+  const statsTxt=`Logged ${s.total}, taken ${s.taken}. Win rate ${s.wr==null?'n/a':s.wr+'%'} (${s.wins}W/${s.losses}L). Direction ${s.dir.long}L/${s.dir.short}S. Anticipation ${s.stateCount.anticipation} vs Reaction ${s.stateCount.reaction}. Win by grade A ${s.byGrade.A==null?'-':s.byGrade.A+'%'} B ${s.byGrade.B==null?'-':s.byGrade.B+'%'} C ${s.byGrade.C==null?'-':s.byGrade.C+'%'}. Win by state reaction ${s.byState.reaction==null?'-':s.byState.reaction+'%'} anticipation ${s.byState.anticipation==null?'-':s.byState.anticipation+'%'}.`;
+  const withSol=journal.filter(e=>e.solution&&e.solutionKind);
+  const lessons=withSol.slice(0,20).map(e=>`(${e.solutionKind}) ${e.coin||''} ${e.direction||''}: ${(''+e.solution).replace(/\s+/g,' ').slice(0,200)}`).join('\n');
+  const notes=journal.filter(e=>e.note&&e.note.trim()).slice(0,20).map(e=>`- ${e.coin||''}: ${e.note.trim().slice(0,160)}`).join('\n');
+  const prompt=`You are a trading performance coach. Find the PATTERN across a trader's stats and per-trade fixes/notes. Output ONLY JSON, no prose:
+{"top_mistake":"one sentence — the most recurring mistake","strength":"one sentence — biggest strength to repeat","focus":"one short imperative line for a daily reminder","suggested_rule":"one concrete rule to add to their strategy, phrased as an instruction"}
+
+STATS: ${statsTxt}
+
+FIXES / WHAT WORKED:
+${lessons||'(none yet)'}
+
+NOTES:
+${notes||'(none)'}`;
+  try{
+    const data=await llm([{type:'text',text:prompt}]);
+    const text=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
+    const p=parseJSON(text);
+    if(p){insights={ts:Date.now(), top_mistake:p.top_mistake||'', strength:p.strength||'', focus:p.focus||'', suggested_rule:p.suggested_rule||''}; await storeSet('insights',JSON.stringify(insights)); showJournalMsg('Review updated.');}
+    else showJournalMsg('Could not read the review — try again.');
+  }catch(err){showJournalMsg('Review failed: '+(err.message||'error'));}
+  if(btn){btn.disabled=false;btn.textContent='🔎 Run review';}
+  renderJournal(); renderFocus();
+}
+function renderInsights(){
+  const el=document.getElementById('jinsights'); if(!el)return;
+  if(!insights||!insights.ts){el.innerHTML='';return;}
+  const d=new Date(insights.ts);
+  const opts=concepts.map(c=>`<option value="${c.id}">${esc(c.title)}</option>`).join('');
+  el.innerHTML=`<div class="insights">
+    <div class="ik">Review · ${d.toLocaleDateString(undefined,{month:'short',day:'numeric'})}</div>
+    ${insights.top_mistake?`<div class="irow"><span class="il">Top mistake</span><p>${esc(insights.top_mistake)}</p></div>`:''}
+    ${insights.strength?`<div class="irow"><span class="il good">Strength</span><p>${esc(insights.strength)}</p></div>`:''}
+    ${insights.focus?`<div class="irow"><span class="il gold">Daily focus</span><p>${esc(insights.focus)}</p></div>`:''}
+    ${insights.suggested_rule?`<div class="irule"><span class="il gold">Suggested rule for your concept</span><p>${esc(insights.suggested_rule)}</p>${(journal.length-conceptBaseline>=25)?`<div class="addrule"><select id="ruleConcept">${opts}</select><button class="ghost" onclick="addRuleToConcept()">Add to concept</button></div>`:`<div class="hint" style="margin:8px 0 0">Adding to a concept unlocks after 25 new logged trades — ${Math.max(0,25-(journal.length-conceptBaseline))} to go.</div>`}</div>`:''}
+  </div>`;
+}
+function addRuleToConcept(){
+  const sel=document.getElementById('ruleConcept'); if(!sel||!insights||!insights.suggested_rule)return;
+  const c=concepts.find(x=>x.id===sel.value); if(!c)return;
+  c.body=(c.body?c.body.trim()+'\n\n':'')+'- '+insights.suggested_rule.trim();
+  conceptBaseline=journal.length; storeSet('conceptBaseline',String(conceptBaseline));
+  saveConcepts(); renderConcepts(); renderChips(); renderJournal(); showJournalMsg('Rule added to “'+c.title+'”. Next update unlocks after 25 more trades.');
+}
+function renderLessons(){
+  const el=document.getElementById('jlessons'); if(!el)return;
+  const list=journal.filter(e=>e.solution);
+  if(!list.length){el.innerHTML='';return;}
+  const captured=!!(insights&&insights.suggested_rule);
+  const canClear=list.length>=20&&captured;
+  el.innerHTML=`<div class="lessons">
+    <div class="lhead"><span class="ik" style="padding:0">Lessons so far (${list.length})</span>
+      ${canClear?`<button class="clearles" onclick="clearLessons()">Clear lessons</button>`:''}</div>
+    ${canClear?`<div class="hint" style="padding:0 11px 6px;margin:0">These ${list.length} lessons are captured in your suggested rule — safe to clear.</div>`:''}
+    ${list.slice(0,30).map(e=>`<div class="lrow"><span class="ltag ${e.solutionKind==='worked'?'good':''}">${e.solutionKind==='worked'?'WORKED':'FIX'}</span><span class="lc">${esc(e.coin||deriveCoin(e.asset)||'')}</span><span class="lt">${esc((''+e.solution).replace(/\s+/g,' ').slice(0,140))}${(''+e.solution).length>140?'…':''}</span></div>`).join('')}</div>`;
+}
+function clearLessons(){
+  const n=journal.filter(e=>e.solution).length;
+  if(!confirm('Clear '+n+' lessons? Your trades, outcomes and notes stay — only the generated fix / what-worked text is removed.'))return;
+  journal.forEach(e=>{e.solution=null; e.solutionKind=null;});
+  saveJournal(); renderJournal(); showJournalMsg('Lessons cleared. New ones will build from here.');
+}
+function updateDue(){
+  const b=document.getElementById('reviewDue'); if(!b)return;
+  const wk=7*24*3600*1000;
+  const due=(!insights||!insights.ts)?(journal.length>=3):(Date.now()-insights.ts>=wk);
+  b.classList.toggle('hidden',!due);
+}
+async function renderFocus(){
+  const el=document.getElementById('focusBanner'); if(!el)return;
+  if(!insights||!insights.focus){el.classList.add('hidden');return;}
+  let dismissed=null; try{dismissed=await storeGet('focusDismiss');}catch(e){}
+  if(dismissed===new Date().toDateString()){el.classList.add('hidden');return;}
+  el.classList.remove('hidden');
+  el.innerHTML=`<span class="ft">Today’s focus</span><span class="fx">${esc(insights.focus)}</span><button class="fd" onclick="dismissFocus()" title="Dismiss for today">✕</button>`;
+}
+async function dismissFocus(){try{await storeSet('focusDismiss',new Date().toDateString());}catch(e){} const el=document.getElementById('focusBanner'); if(el)el.classList.add('hidden');}
+
+/* ---------- watchlist ---------- */
+let watchlist=null;
+async function loadWatchlist(force){
+  const body=document.getElementById('wlBody'); if(!body)return;
+  if(watchlist&&!force){renderWatchlist();return;}
+  body.innerHTML='<div class="jempty">Screening the market…</div>';
+  try{
+    const res=await fetch('/api/watchlist'+(force?'?t='+Date.now():''));
+    const d=await res.json();
+    if(d.error)throw new Error(d.error);
+    watchlist=d; renderWatchlist();
+  }catch(err){
+    body.innerHTML='<div class="err">Could not load the watchlist: '+esc(err.message||'error')+'</div>';
+  }
+}
+function renderWatchlist(){
+  const body=document.getElementById('wlBody'); const t=document.getElementById('wlTime');
+  if(!watchlist||!watchlist.items){body.innerHTML='<div class="jempty">No data yet.</div>';return;}
+  if(t&&watchlist.generatedAt){const d=new Date(watchlist.generatedAt);t.textContent='updated '+d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});}
+  if(!watchlist.items.length){body.innerHTML='<div class="jempty">Nothing is coiling near an un-swept level right now.<br>That is a valid answer — no setups forming means no trades.</div>';return;}
+  body.innerHTML=watchlist.items.map(it=>{
+    const bad=coinRecordWarning(it.coin);
+    return `<div class="wlrow">
+      <div class="wltop">
+        <span class="wlcoin">${esc(it.coin)}</span>
+        <span class="wlpx">${fmtNum(it.price)}</span>
+        <span class="wlside ${it.levelSide==='lows'?'lows':'highs'}">${it.levelSide==='lows'?'POOL BELOW':'POOL ABOVE'}</span>
+        <span class="wlmeta">${it.distPct}% away · ATR ${it.atrPct}% · 24h ${it.move24>0?'+':''}${it.move24}%</span>
+      </div>
+      <div class="wlnote">${esc(it.note)}</div>
+      ${bad?`<div class="wlbad">⚠ Your record on ${esc(it.coin)} is poor — check the journal before trading it.</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+/* ---------- export / import ---------- */
+function showJournalMsg(m){const el=document.getElementById('jmsg'); if(!el)return; el.textContent=m; setTimeout(()=>{if(el.textContent===m)el.textContent='';},4000);}
+async function exportData(){
+  const data={app:'WASTED_DON',version:1,exportedAt:new Date().toISOString(),
+    concepts, journal, settings:{account:document.getElementById('account').value, risk:document.getElementById('risk').value}};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download='wasted_don_backup_'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  showJournalMsg('Backup downloaded.');
+}
+function importData(){document.getElementById('importFile').click();}
+async function handleImport(ev){
+  const f=ev.target.files[0]; if(!f){return;}
+  try{
+    const d=JSON.parse(await f.text());
+    if(Array.isArray(d.concepts)){concepts=d.concepts; selected=new Set(concepts.map(c=>c.id)); await saveConcepts(); renderConcepts(); renderChips();}
+    if(Array.isArray(d.journal)){journal=d.journal; await saveJournal();}
+    if(d.settings){if(d.settings.account!=null)document.getElementById('account').value=d.settings.account; if(d.settings.risk!=null)document.getElementById('risk').value=d.settings.risk; await saveSettings();}
+    renderJournal(); showJournalMsg('Backup imported.');
+  }catch(err){showJournalMsg('Could not read that file — is it a WASTED_DON backup?');}
+  ev.target.value='';
+}
+
+loadState();
+</script>
