@@ -1,25 +1,12 @@
 {
-  "regions": [
-    "fra1"
-  ],
+  "regions": ["fra1"],
   "functions": {
-    "api/analyze.js": {
-      "maxDuration": 60
-    },
-    "api/watchlist.js": {
-      "maxDuration": 60
-    },
-    "api/alerts.js": {
-      "maxDuration": 60
-    },
-    "api/arm-alerts.js": {
-      "maxDuration": 30
-    }
+    "api/analyze.js": { "maxDuration": 60 },
+    "api/watchlist.js": { "maxDuration": 60 },
+    "api/alerts.js": { "maxDuration": 60 },
+    "api/arm-alerts.js": { "maxDuration": 30 }
   },
   "crons": [
-    {
-      "path": "/api/watchlist",
-      "schedule": "0 1 * * *"
-    }
+    { "path": "/api/watchlist", "schedule": "0 1 * * *" }
   ]
 }
