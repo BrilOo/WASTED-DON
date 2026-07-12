@@ -91,6 +91,42 @@ function confirmedSweep(kl, level, side) {
   return null;
 }
 
+// Simple moving average of the closes over the last n candles.
+function sma(closes, n) {
+  if (closes.length < n) return null;
+  const s = closes.slice(-n);
+  return s.reduce((a, b) => a + b, 0) / n;
+}
+
+// Read the trend from stacked moving averages, same idea as MA(7)/MA(25)/MA(99).
+// Returns "up", "down", or "flat".
+function trendOf(closes) {
+  const fast = sma(closes, 7);
+  const mid = sma(closes, 25);
+  const slow = sma(closes, 99) || sma(closes, Math.min(50, closes.length - 1));
+  if (fast == null || mid == null || slow == null) return "flat";
+  if (fast > mid && mid > slow) return "up";
+  if (fast < mid && mid < slow) return "down";
+  return "flat";
+}
+
+// Decide what the sweep actually means, given the trend.
+// KEY FIX: a sweep of highs in an UPTREND is usually continuation (watch LONG),
+// not a reversal. Only call a short when the sweep fights the trend or the trend is down.
+function readSetup(side, trend) {
+  if (side === "highs") {
+    // pool above got swept
+    if (trend === "up") return { dir: "LONG continuation", bias: "long", conf: "the uptrend is intact — treat the sweep as a stop-run before more upside, not a reversal" };
+    if (trend === "down") return { dir: "SHORT", bias: "short", conf: "a high swept and rejected inside a downtrend — classic short" };
+    return { dir: "SHORT or reclaim", bias: "either", conf: "no clear trend — could reject (short) or reclaim (long); let the chart decide" };
+  } else {
+    // pool below got swept
+    if (trend === "down") return { dir: "SHORT continuation", bias: "short", conf: "the downtrend is intact — treat the sweep as a stop-run before more downside, not a reversal" };
+    if (trend === "up") return { dir: "LONG", bias: "long", conf: "a low swept and reclaimed inside an uptrend — classic long" };
+    return { dir: "LONG or breakdown", bias: "either", conf: "no clear trend — could reclaim (long) or break down (short); let the chart decide" };
+  }
+}
+
 async function sendEmail(subject, html) {
   const key = process.env.RESEND_API_KEY;
   const to = process.env.ALERT_EMAIL_TO;
@@ -128,23 +164,27 @@ export default async function handler(req, res) {
     for (const p of pending) {
       if (p.done) continue;
       try {
-        const kl = await j(`/api/v3/klines?symbol=${p.symbol}&interval=${KLINE_INTERVAL}&limit=${CONFIRM_BARS + 2}`);
+        const kl = await j(`/api/v3/klines?symbol=${p.symbol}&interval=${KLINE_INTERVAL}&limit=120`);
         const hit = confirmedSweep(kl, p.level, p.side);
         if (hit) {
-          const dir = p.side === "lows" ? "LONG setup" : "SHORT setup";
+          const closes = kl.map(k => parseFloat(k[4]));
+          const trend = trendOf(closes);
+          const setup = readSetup(p.side, trend);
           const coin = String(p.symbol || "").replace(/(USDT|USDC|BUSD|FDUSD|TUSD)$/, "") || p.coin || p.symbol;
+          const trendLabel = trend === "up" ? "uptrend" : trend === "down" ? "downtrend" : "no clear trend";
           const r = await sendEmail(
-            `⚡ ${coin} swept ${p.level} — watch for a ${dir}`,
+            `⚡ ${coin} swept ${p.level} — ${setup.dir}`,
             `<div style="font-family:sans-serif">
                <h2>${coin} confirmed sweep</h2>
-               <p><b>Pair:</b> ${p.symbol}</p>
+               <p><b>Pair:</b> ${p.symbol} &nbsp;·&nbsp; <b>Trend:</b> ${trendLabel}</p>
                <p>Price swept the ${p.side === "lows" ? "un-swept lows" : "un-swept highs"} at
                <b>${p.level}</b> and closed back (${hit.at}).</p>
-               <p>Now pull the ${coin} chart and run it through WASTED_DON to confirm the ${dir}.
-               The alert says <i>go look</i> — not <i>enter</i>.</p>
+               <p><b>Likely read: ${setup.dir}.</b> ${setup.conf}.</p>
+               <p>Now pull the ${coin} chart and run it through WASTED_DON to confirm.
+               The alert says <i>go look</i> — not <i>enter</i>. Let the analysis settle the direction.</p>
              </div>`
           );
-          fired.push({ coin, symbol: p.symbol, level: p.level, email: r });
+          fired.push({ coin, symbol: p.symbol, level: p.level, trend, read: setup.dir, email: r });
           p.done = true;
           p.firedAt = new Date().toISOString();
         } else {
