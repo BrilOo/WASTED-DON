@@ -22,16 +22,25 @@ let ACTIVE_HOST = null;
 
 // ---- tunables -------------------------------------------------------------
 const QUOTE = "USDT";
-const MIN_QUOTE_VOL_24H = 20_000_000; // liquidity floor, in USDT
-const MAX_ABS_24H_MOVE = 6;           // % — exclude coins that already ran (anti-FOMO)
+const MIN_QUOTE_VOL_24H = 8_000_000;  // liquidity floor, in USDT (lowered from 20M)
+const MAX_ABS_24H_MOVE = 9;           // % — exclude coins that already ran (loosened from 6)
 const KLINE_INTERVAL = "1h";
 const KLINES = 100;                   // ~4 days of 1h candles
 const SWING_LOOKBACK = 40;            // bars used to find the liquidity pool
-const NEAR_LEVEL_PCT = 2.0;           // price must be within this % of the level
-const MAX_RESULTS = 8;
-const MAX_SCAN = 30;                  // cap how many symbols we pull klines for
-const BATCH = 6;                      // parallel kline requests per batch
-const TIME_BUDGET_MS = 22000;         // return what we have before Vercel kills us
+const NEAR_LEVEL_PCT = 3.5;           // price within this % of the level (widened from 2.0)
+const MIN_ATR_PCT = 0.15;             // skip near-dead coins (stables, pegged assets)
+const MAX_RESULTS = 15;               // show more candidates (was 8)
+
+// Stablecoins and pegged assets never "coil near a level" in a meaningful way —
+// they just sit at their peg. Exclude them outright.
+const STABLES = new Set([
+  "USDC","USDT","BUSD","TUSD","USDP","DAI","FDUSD","USD1","RLUSD","PYUSD",
+  "EURI","AEUR","USDD","GUSD","LUSD","FRAX","SUSD","USTC","EUR","GBP","TRY",
+  "BRL","ARS","XUSD","USDS","USDE","SUSDE","BFUSD","WBETH","BNSOL"
+]);
+const MAX_SCAN = 120;                 // scan far more of the market (was 30)
+const BATCH = 10;                     // parallel kline requests per batch (was 6)
+const TIME_BUDGET_MS = 45000;         // more time for the wider scan (was 22000)
 // ---------------------------------------------------------------------------
 
 // Fetch a Binance path, trying each host until one answers.
@@ -109,6 +118,9 @@ function screenSymbol(sym, kl, move24) {
   const compression = atrNow / atrPrev;
   const atrPct = (atrNow / price) * 100;
 
+  // a coin that barely moves cannot produce a tradeable setup
+  if (atrPct < MIN_ATR_PCT) return null;
+
   // candidate levels: un-swept, and price is close to them
   const cands = [];
   if (!sweptHigh && distHigh >= 0 && distHigh <= NEAR_LEVEL_PCT)
@@ -146,6 +158,7 @@ async function buildWatchlist() {
   const universe = tickers
     .filter(t => t.symbol.endsWith(QUOTE))
     .filter(t => !/(UP|DOWN|BULL|BEAR)USDT$/.test(t.symbol))
+    .filter(t => !STABLES.has(t.symbol.replace(new RegExp(QUOTE + "$"), ""))) // no stables
     .filter(t => parseFloat(t.quoteVolume) >= MIN_QUOTE_VOL_24H)
     .filter(t => Math.abs(parseFloat(t.priceChangePercent)) <= MAX_ABS_24H_MOVE) // anti-FOMO
     .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
@@ -186,6 +199,8 @@ async function buildWatchlist() {
     source: ACTIVE_HOST,
     scanned,
     criteria: {
+      excludedStablecoins: true,
+      minAtrPct: MIN_ATR_PCT,
       excludedMoveOver: MAX_ABS_24H_MOVE,
       minQuoteVol24h: MIN_QUOTE_VOL_24H,
       nearLevelWithinPct: NEAR_LEVEL_PCT,
