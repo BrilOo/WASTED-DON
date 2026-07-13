@@ -300,14 +300,14 @@
         <path d="M20 7 L31 20 L24 20 L24 33 L16 33 L16 20 L9 20 Z" fill="#f0b429"/>
         <circle cx="20" cy="14" r="2.4" fill="#0d1014"/>
       </svg>
-      <div>
+      <div onclick="adminTap()" style="cursor:default">
         <h1>WASTED_DON</h1>
         <div class="sub">Chart Desk · Crypto</div>
       </div>
     </div>
     <div class="tabs">
       <button id="tabAnalyze" class="on" onclick="setView('analyze')">Analyze</button>
-      <button id="tabConcepts" onclick="setView('concepts')">Concepts</button>
+      <button id="tabConcepts" class="hidden" onclick="setView('concepts')">Concepts</button>
       <button id="tabJournal" onclick="setView('journal')">Journal</button>
       <button id="tabWatchlist" onclick="setView('watchlist')">Watchlist</button>
     </div>
@@ -448,72 +448,13 @@ let editingId=null;
 
 /* ---------- seed concepts (load on first run / empty storage) ---------- */
 const SEED_CONCEPTS=[
-  {id:"seed_bagtract_loose", title:"BAGTRACT (loose) — SMC bias entry",
-   body:`A flexible SMC/ICT read. ALWAYS give a directional entry and grade it A/B/C — do not refuse.
-
-BIAS: Direction from structure (higher highs/lows = long; lower highs/lows = short) and price vs the dominant trend / MA99 if shown.
-
-CORE (mainly drive the grade):
-- Liquidity grab: price swept beyond a clear level (equal highs/lows, prior day/week high/low, or a swing) and closed back inside.
-- Displacement: a strong impulsive candle/run in the bias direction.
-- Entry zone: a retracement into a Fair Value Gap, Order Block, or Mitigation Block, ideally in the right half (discount for longs, premium for shorts).
-
-SUPPORTING (raise the grade, NOT required):
-- Break of Structure or CHOCH confirmation.
-- Inducement (a smaller opposing pool taken out first).
-
-GRADING:
-- A = sweep + displacement + clean entry zone all present, trend agrees.
-- B = bias clear and an entry zone exists, but one core element is weak/unconfirmed.
-- C = the SMC sequence is mostly absent — do NOT give an entry. Set grade_block=true and say what is missing and what to wait for.
-
-STOP: beyond the recent swing / grab extreme with a small buffer.
-TARGETS: TP1 ~2R; TP2 at the next opposing liquidity level (opposing swing / equal highs / equal lows).`},
-  {id:"seed_bagtract_strict", title:"BAGTRACT — SMC sweep + retracement (strict)", autoselect:true,
-   body:`Quality-over-quantity SMC/ICT setup. Be strict; most charts should NOT qualify (grade C and warn when they don't).
-
-BIAS: Bullish = higher highs + higher lows; bearish = lower highs + lower lows. If choppy/directionless, lowest grade. Entries must agree with the MA99 (or dominant trend if MAs aren't shown).
-
-THE SEQUENCE (all should be present for a top grade):
-- B — Break of Structure: a candle CLOSED beyond the prior swing in the bias direction.
-- A — Accumulation: a tight, low-range contraction phase just before a strong move.
-- G — Liquidity Grab: price wicked BEYOND a clear level (equal highs/lows, prior day/week high or low, or a major swing) then CLOSED back inside.
-- Inducement: a smaller opposing liquidity pool between price and target taken out first.
-
-CONFIRMATION (need at least one AFTER the grab): Displacement (large-body impulsive candle/run), CHOCH (close beyond last opposing internal swing), or BOS in the intended direction.
-
-ENTRY: only on a retracement INTO a Fair Value Gap (3-candle imbalance), Order Block (last opposing candle before displacement), or Mitigation Block — in the correct half: discount (lower) for longs, premium (upper) for shorts.
-
-STOP: just beyond the grab / order block extreme, small buffer.
-TARGETS: TP1 at 2R then breakeven; TP2 at the next opposing major liquidity level.
-
-GOLDEN GATE — grade A only if ALL true: (1) sweep occurred, (2) inducement cleared, (3) displacement present, (4) BOS or CHOCH confirmed, (5) retrace into a valid FVG/OB/MB in the correct premium/discount half. Each missing gate lowers the grade.`},
-  {id:"seed_atr_vol", title:"ATR volatility & sizing",
-   body:`Use ATR (Average True Range) to read volatility and drive a volatility-based stop.
-
-- If an ATR value is visible in a provided data screenshot (or on the chart), read it and convert to % of price: ATR% = ATR ÷ price × 100. Put that number in the atr_pct field. If no ATR is shown, estimate ATR% visually from candle size on the execution timeframe and still fill atr_pct.
-- Classify volatility from atr_pct into the volatility field: under ~1% = low, ~1–4% = medium, over ~4% = high (judge for the timeframe). Add a short volatility_note. If very low, note the setup may lack room; if very high, note larger swings.
-- The tool will place a stop at 1.5× ATR from entry and size the position from it, so make atr_pct accurate for the execution timeframe.`},
-  {id:"seed_exit_rules", title:"Exit & risk rules", autoselect:true,
-   body:`My fixed exit and risk rules — apply to every read and every coaching fix:
-- SINGLE ENTRY only. Never suggest scaling in or averaging down.
-- Stop: fixed at the structure level (beyond the liquidity grab / order block).
-- Move the stop to BREAKEVEN once price is about 1R in my favour.
-- Take profit: one or more targets (first around 2R); I may scale out across several targets when testing.
-Keep entry and stop as one clean setup with a single R:R to the first target.`},
-  {id:"seed_no_fomo", title:"Avoid FOMO / no chasing", autoselect:true,
-   body:`Never chase price. Flag as FOMO (set fomo_block=true → no entry, wait for a pullback) when ANY clear sign is present:
-- Price has already run a long way from the setup origin with no pullback (entering near the top of a long move / bottom of a short move).
-- The candle at entry is vertical/parabolic — chasing a big impulsive candle instead of the retrace.
-- The entry would be mid-move, far from a valid FVG / order block / value zone.
-- R:R is poor because the clean entry was already missed (stop now far, target now close).
-Only block CLEAR chases — a normal pullback entry within a trend is fine. When in doubt, wait for a retrace into a valid zone in the correct premium/discount half.`},
-  {id:"seed_ma99_trend", title:"MA99 trend filter", autoselect:true,
-   body:`Trade WITH the higher-timeframe trend, read from the MA99 (or the dominant trend if moving averages aren't shown):
-- Price ABOVE the MA99 and MA99 sloping up = uptrend → favour LONGS. Only take shorts on a clear structure break against it, and grade them lower.
-- Price BELOW the MA99 and MA99 sloping down = downtrend → favour SHORTS. Only take longs on a clear structure break against it, and grade them lower.
-- Price hugging a FLAT MA99 = no trend → be very selective; most reads here are grade C (no entry).
-A sweep that agrees with the trend (e.g. a low swept in an uptrend) is a continuation setup and scores higher. A sweep that fights the trend needs displacement AND a confirmed BOS/CHoCH before it can grade above C. Never call a counter-trend entry a top-grade setup on the sweep alone.`}
+   {id:"seed_bagtract_loose", title:"BAGTRACT (loose) — SMC bias entry"},
+   {id:"seed_bagtract_strict", title:"BAGTRACT — SMC sweep + retracement (strict)", autoselect:true},
+   {id:"seed_atr_vol", title:"ATR volatility & sizing"},
+   {id:"seed_exit_rules", title:"Exit & risk rules", autoselect:true},
+   {id:"seed_no_fomo", title:"Avoid FOMO / no chasing", autoselect:true},
+   {id:"seed_ma99_trend", title:"MA99 trend filter", autoselect:true},
+   // Concept bodies live SERVER-SIDE in api/analyze.js so they are never sent to any browser.
 ];
 
 /* ---------- storage ---------- */
@@ -524,6 +465,37 @@ let journal=[];
 let insights=null;
 let conceptBaseline=0;
 let lastRead=null, logMeta={};
+
+/* ---------- admin gate for Concepts ---------- */
+const ADMIN_CODE = "donadmin";  // ← CHANGE this to your own private admin password
+let IS_ADMIN = false;
+let _adminTaps = 0, _adminTapTimer = null;
+function adminTap(){
+  // tap the logo 5 times quickly to reveal the admin prompt
+  _adminTaps++;
+  clearTimeout(_adminTapTimer);
+  _adminTapTimer = setTimeout(()=>{ _adminTaps=0; }, 1500);
+  if(_adminTaps>=5){
+    _adminTaps=0;
+    const code = prompt("Admin code:");
+    if(code===ADMIN_CODE){ setAdmin(true); alert("Concepts unlocked."); }
+    else if(code!=null){ alert("Wrong code."); }
+  }
+}
+async function setAdmin(on){
+  try{ await storeSet('admin', on ? '1' : ''); }catch(e){}
+  applyAdmin(on);
+}
+function applyAdmin(on){
+  IS_ADMIN = !!on;
+  const tab=document.getElementById('tabConcepts');
+  if(tab) tab.classList.toggle('hidden', !IS_ADMIN);
+  // if a non-admin is somehow sitting on the concepts view, bounce them out
+  if(!IS_ADMIN){
+    const cv=document.getElementById('viewConcepts');
+    if(cv && !cv.classList.contains('hidden')) setView('analyze');
+  }
+}
 
 async function loadState(){
   try{const r=await storeGet('concepts'); if(r) concepts=JSON.parse(r);}catch(e){}
@@ -543,6 +515,8 @@ async function loadState(){
   }
   saveConcepts();
   renderConcepts(); renderChips(); renderJournal(); renderFocus();
+  let _adm=''; try{_adm=await storeGet('admin');}catch(e){}
+  applyAdmin(_adm==='1');
 }
 async function saveConcepts(){await storeSet('concepts',JSON.stringify(concepts));}
 async function saveSettings(){
@@ -554,10 +528,15 @@ async function saveAccess(){await storeSet('access',document.getElementById('acc
 
 /* ---------- view switch ---------- */
 function setView(v){
+  // non-admins can never reach the concepts view
+  if(v==='concepts' && !IS_ADMIN) v='analyze';
   ['Analyze','Concepts','Journal','Watchlist'].forEach(x=>{
     document.getElementById('view'+x).classList.toggle('hidden',v!==x.toLowerCase());
     document.getElementById('tab'+x).classList.toggle('on',v===x.toLowerCase());
   });
+  // the .on toggle above must never reveal the concepts tab to a non-admin
+  const ct=document.getElementById('tabConcepts');
+  if(ct && !IS_ADMIN) ct.classList.add('hidden');
   if(v==='journal')renderJournal();
   if(v==='analyze')renderFocus();
   if(v==='watchlist')loadWatchlist();
@@ -718,7 +697,7 @@ async function llm(content){
   const res=await fetch("/api/analyze",{
     method:"POST",
     headers:Object.assign({"Content-Type":"application/json"}, accessCode?{"x-access-code":accessCode}:{}),
-    body:JSON.stringify({content})
+    body:JSON.stringify({content, conceptIds:[...selected]})
   });
   let data;
   try{data=await res.json();}catch(e){throw new Error('The service returned an unreadable response — usually the images were too large. Remove one and try again.');}
@@ -733,9 +712,8 @@ async function runAnalysis(){
   btn.disabled=true; btn.innerHTML='<span class="spin"></span>Reading the charts…';
 
   const chosen=concepts.filter(c=>selected.has(c.id));
-  const conceptsText=chosen.length
-    ? chosen.map((c,i)=>`${i+1}. ${c.title}${c.body?' — '+c.body:''}`).join('\n')
-    : '(No specific concepts selected. Use sound general technical & price-action analysis.)';
+  // Concept bodies are applied SERVER-SIDE (api/analyze.js) and are never sent from the browser.
+  const conceptsText='(The trader\'s framework is applied by the desk.)';
   const instructions=document.getElementById('instructions').value.trim();
   const funding=document.getElementById('funding').value.trim();
   const netflow=document.getElementById('netflow').value.trim();
@@ -756,8 +734,7 @@ Grade every read honestly:
 
 Also classify trade readiness: "reaction" = the entry TRIGGERS (liquidity grab/sweep, displacement, and/or BOS/CHOCH) have already fired, so price has confirmed and the trader is reacting to a move; "anticipation" = directional bias and location (e.g. premium/discount) are set but those triggers have NOT fired yet, so taking it means anticipating. Put this in trade_state with a one-line state_reason. Always report the dealing range you used (range_high and range_low) so premium/discount is auditable, and list the liquidity_levels you see with their prices. If you cannot read the price axis, set axis_readable false and still give best estimates. BEFORE giving a tradeable entry, check for UN-SWEPT liquidity resting against the entry: for a long, a clear liquidity pool (equal lows, prior lows, an obvious swing low) sitting BELOW the entry that has NOT been swept; for a short, resting liquidity ABOVE the entry. If such un-swept liquidity exists against the entry, do NOT provide an entry — set liquidity_block=true and in liquidity_block_note name the level and say price should sweep that liquidity first. If nothing un-swept threatens the entry, set liquidity_block=false and proceed normally. Also check for FOMO / chasing: if price has already run a long way from the setup origin with no pullback, or the entry would be mid-move far from a valid FVG/OB/value zone, or the R:R is poor because the clean entry was already missed, treat it as a chase — set fomo_block=true and in fomo_note say to wait for a pullback into a valid zone. Only flag CLEAR chases, not every strong move. IMPORTANT: whenever you withhold an entry for ANY reason (liquidity_block, fomo_block, or grade C), you MUST give concrete waiting instructions with real prices: fill wait_zone_low and wait_zone_high (the actual price zone to wait for), wait_zone_label (what that zone is), wait_trigger (the exact confirmation to see at that zone), wait_invalidation (the price that kills the idea), and prospective_entry / prospective_stop (what you would take if the zone and trigger are met). Never say only "wait for a pullback" — always name where and what to. Also set alert_price to the single best price to put a chart alert at (usually the near edge of the wait zone, the price that would first tell the trader to look again) and alert_note for what to do when it fires. Read prices off the visible axis as accurately as you can. ${hasCtx?'You are also given perp market context (funding rate and/or net exchange flow) — treat it as a positioning/sentiment input that confirms or tempers the price read, not as a price level. ':''}Output ONLY raw JSON, no markdown, no commentary.
 
-TRADER'S FRAMEWORK / CONCEPTS:
-${conceptsText}`;
+The trader's framework / concepts follow below — apply them strictly.`;
 
   const userText=`${multi?'These charts are the same asset on different timeframes (labelled above each image).':'Analyze this crypto chart.'} ALWAYS give a directional best read (never refuse).
 ${instructions?'Trader note: '+instructions+'\n':''}${hasCtx?'\nMARKET CONTEXT (perp positioning & flow — weigh these into bias and grade; they confirm or temper the price read but do not override clear structure):\n'+ctx:''}
