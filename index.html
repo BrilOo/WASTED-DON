@@ -438,6 +438,12 @@
   </footer>
 </div>
 
+<script type="module">
+  // Vercel Speed Insights initialization
+  import { injectSpeedInsights } from 'https://esm.sh/@vercel/speed-insights@2.0.0';
+  injectSpeedInsights();
+</script>
+
 <script>
 const MODEL="claude-sonnet-4-6";
 let concepts=[];           // {id,title,body}

@@ -1,0 +1,14 @@
+{
+  "name": "wasted-don",
+  "version": "1.0.0",
+  "description": "WASTED_DON — Crypto Chart Desk - AI chart-analysis tool for crypto perps",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vercel/speed-insights": "^2.0.0"
+  }
+}
