@@ -503,7 +503,8 @@ async function loadState(){
     if(v.account!=null)document.getElementById('account').value=v.account;
     if(v.risk!=null)document.getElementById('risk').value=v.risk;}}catch(e){}
   try{const j=await storeGet('journal'); if(j) journal=JSON.parse(j);}catch(e){}
-  try{const ac=await storeGet('access'); if(ac)document.getElementById('access').value=ac;}catch(e){}
+  // access code is intentionally NOT remembered — the field always starts blank,
+  // so each user must type the code before analysis will run.
   try{const ins=await storeGet('insights'); if(ins) insights=JSON.parse(ins);}catch(e){}
   try{const cb=await storeGet('conceptBaseline'); if(cb!=null){conceptBaseline=parseInt(cb)||0;} else {conceptBaseline=journal.length; await storeSet('conceptBaseline',String(conceptBaseline));}}catch(e){conceptBaseline=journal.length;}
   if(!concepts.length){
@@ -523,7 +524,7 @@ async function saveSettings(){
   await storeSet('settings',JSON.stringify({account:document.getElementById('account').value, risk:document.getElementById('risk').value}));
 }
 async function saveJournal(){await storeSet('journal',JSON.stringify(journal));}
-async function saveAccess(){await storeSet('access',document.getElementById('access').value.trim());}
+async function saveAccess(){ /* access code is never stored — field stays blank each session */ try{await storeSet('access','');}catch(e){} }
 ['account','risk'].forEach(id=>document.getElementById(id).addEventListener('change',saveSettings));
 
 /* ---------- view switch ---------- */
