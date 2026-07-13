@@ -129,9 +129,9 @@ function readSetup(side, trend) {
 
 async function sendEmail(subject, html) {
   const key = process.env.RESEND_API_KEY;
-  const to = process.env.ALERT_EMAIL_TO;
+  const to = (process.env.ALERT_EMAIL_TO || "").split(",").map(s => s.trim()).filter(Boolean);
   const from = process.env.ALERT_EMAIL_FROM || "onboarding@resend.dev";
-  if (!key || !to) return { skipped: "missing RESEND_API_KEY or ALERT_EMAIL_TO" };
+  if (!key || !to.length) return { skipped: "missing RESEND_API_KEY or ALERT_EMAIL_TO" };
   const r = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -199,7 +199,45 @@ export default async function handler(req, res) {
     const keep = pending.filter(p => p.done && Date.now() - new Date(p.firedAt || Date.now()).getTime() < 86400000);
     await kvSet("wd_alert_levels", [...stillPending, ...keep]);
 
-    res.status(200).json({ checked: pending.length, fired: fired.length, details: fired });
+    // ---- also check single PRICE alerts (from the analysis "Alert me at this price" button) ----
+    let priceFired = 0;
+    try {
+      const priceAlerts = (await kvGet("wd_price_alerts")) || [];
+      if (priceAlerts.length) {
+        const stillP = [];
+        const keepP = [];
+        for (const a of priceAlerts) {
+          if (a.done) {
+            if (Date.now() - new Date(a.firedAt || 0).getTime() < 86400000) keepP.push(a);
+            continue;
+          }
+          try {
+            const t = await j(`/api/v3/ticker/price?symbol=${a.symbol}`);
+            const last = parseFloat(t.price);
+            // fire when price is within 0.15% of the target (reached the level)
+            if (isFinite(last) && Math.abs(last - a.price) / a.price <= 0.0015) {
+              await sendEmail(
+                `🔔 ${a.coin} reached ${a.price} — time to look`,
+                `<div style="font-family:sans-serif">
+                   <h2>${a.coin} hit your alert price</h2>
+                   <p><b>Pair:</b> ${a.symbol} &nbsp;·&nbsp; <b>Now:</b> ${last}</p>
+                   <p>Price reached <b>${a.price}</b>, the level WASTED_DON told you to wait for.</p>
+                   ${a.note ? `<p>${a.note}</p>` : ""}
+                   <p>Pull the ${a.coin} chart and re-run it through WASTED_DON. Go look — don't enter blind.</p>
+                 </div>`
+              );
+              a.done = true; a.firedAt = new Date().toISOString();
+              keepP.push(a); priceFired++;
+            } else {
+              stillP.push(a);
+            }
+          } catch (_) { stillP.push(a); }
+        }
+        await kvSet("wd_price_alerts", [...stillP, ...keepP]);
+      }
+    } catch (_) { /* price alerts optional */ }
+
+    res.status(200).json({ checked: pending.length, fired: fired.length, priceFired, details: fired });
   } catch (e) {
     res.status(500).json({ error: String((e && e.message) || e) });
   }
