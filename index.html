@@ -336,10 +336,10 @@
         <div class="row2">
           <label class="fld num"><span>Funding rate (%)</span>
             <input type="number" id="funding" step="any" placeholder="e.g. 0.01 or -0.03"></label>
-          <label class="fld"><span>Net exchange flow</span>
-            <input type="text" id="netflow" placeholder="e.g. -1,500 BTC out · +$120M in"></label>
+          <label class="fld num"><span>ATR (% of price)</span>
+            <input type="number" id="atrpct" step="any" placeholder="e.g. 2.3"></label>
         </div>
-        <div class="hint">Funding: + = longs pay shorts (crowded longs). Flow: into exchanges = potential sell pressure, out = accumulation. Type values, or drop/paste a screenshot below (funding, net inflow, or an ATR panel).</div>
+        <div class="hint">Funding: + = longs pay shorts (crowded longs), a squeeze-risk lean. ATR%: your volatility, used to size the stop. Both optional — leave blank to read purely off the charts.</div>
         <div class="drop drop-sm" id="ctxDrop" onclick="setPaste('ctx');document.getElementById('ctxFile').click()">
           <b>Drop or paste a data screenshot</b>
           <small>funding · net inflow · OI · ATR — read for values, click then ⌘/Ctrl+V to paste</small>
@@ -717,10 +717,10 @@ async function runAnalysis(){
   const conceptsText='(The trader\'s framework is applied by the desk.)';
   const instructions=document.getElementById('instructions').value.trim();
   const funding=document.getElementById('funding').value.trim();
-  const netflow=document.getElementById('netflow').value.trim();
+  const atrpct=document.getElementById('atrpct').value.trim();
   let ctx='';
   if(funding!=='')ctx+=`- Funding rate: ${funding}%. Positive = longs pay shorts (long-crowded); strongly positive warns of squeeze/reversal risk against longs; negative = short-crowded.\n`;
-  if(netflow!=='')ctx+=`- Net exchange flow: ${netflow}. Net INTO exchanges = potential sell pressure (bearish lean); net OUT = accumulation (bullish lean).\n`;
+  if(atrpct!=='')ctx+=`- ATR is ${atrpct}% of price on the execution timeframe. Use this for the volatility reading and to size the stop (~1.5× ATR).\n`;
   if(ctxImages.length)ctx+=`- ${ctxImages.length} market-data screenshot(s) provided (labelled MARKET DATA below) — read funding / net inflow / open interest / ATR values from them. If an ATR (Average True Range) value is visible, convert it to % of price using the chart price (ATR% = ATR ÷ price × 100) and use that to set the volatility reading.\n`;
   const hasCtx=ctx!=='';
   const multi=images.length>1;
@@ -733,7 +733,7 @@ Grade every read honestly:
 - "B" = a workable setup but one or two conditions are weak or unconfirmed.
 - "C" = the framework is mostly NOT satisfied. Do NOT give a tradeable entry: this is a wait. Explain what is missing.
 
-Also classify trade readiness: "reaction" = the entry TRIGGERS (liquidity grab/sweep, displacement, and/or BOS/CHOCH) have already fired, so price has confirmed and the trader is reacting to a move; "anticipation" = directional bias and location (e.g. premium/discount) are set but those triggers have NOT fired yet, so taking it means anticipating. Put this in trade_state with a one-line state_reason. Always report the dealing range you used (range_high and range_low) so premium/discount is auditable, and list the liquidity_levels you see with their prices. If you cannot read the price axis, set axis_readable false and still give best estimates. BEFORE giving a tradeable entry, check for UN-SWEPT liquidity resting against the entry: for a long, a clear liquidity pool (equal lows, prior lows, an obvious swing low) sitting BELOW the entry that has NOT been swept; for a short, resting liquidity ABOVE the entry. If such un-swept liquidity exists against the entry, do NOT provide an entry — set liquidity_block=true and in liquidity_block_note name the level and say price should sweep that liquidity first. If nothing un-swept threatens the entry, set liquidity_block=false and proceed normally. Also check for FOMO / chasing: if price has already run a long way from the setup origin with no pullback, or the entry would be mid-move far from a valid FVG/OB/value zone, or the R:R is poor because the clean entry was already missed, treat it as a chase — set fomo_block=true and in fomo_note say to wait for a pullback into a valid zone. Only flag CLEAR chases, not every strong move. IMPORTANT: whenever you withhold an entry for ANY reason (liquidity_block, fomo_block, or grade C), you MUST give concrete waiting instructions with real prices: fill wait_zone_low and wait_zone_high (the actual price zone to wait for), wait_zone_label (what that zone is), wait_trigger (the exact confirmation to see at that zone), wait_invalidation (the price that kills the idea), and prospective_entry / prospective_stop (what you would take if the zone and trigger are met). Never say only "wait for a pullback" — always name where and what to. Also set alert_price to the single best price to put a chart alert at (usually the near edge of the wait zone, the price that would first tell the trader to look again) and alert_note for what to do when it fires. Read prices off the visible axis as accurately as you can. ${hasCtx?'You are also given perp market context (funding rate and/or net exchange flow) — treat it as a positioning/sentiment input that confirms or tempers the price read, not as a price level. ':''}Output ONLY raw JSON, no markdown, no commentary.
+Also classify trade readiness: "reaction" = the entry TRIGGERS (liquidity grab/sweep, displacement, and/or BOS/CHOCH) have already fired, so price has confirmed and the trader is reacting to a move; "anticipation" = directional bias and location (e.g. premium/discount) are set but those triggers have NOT fired yet, so taking it means anticipating. Put this in trade_state with a one-line state_reason. Always report the dealing range you used (range_high and range_low) so premium/discount is auditable, and list the liquidity_levels you see with their prices. If you cannot read the price axis, set axis_readable false and still give best estimates. BEFORE giving a tradeable entry, check for UN-SWEPT liquidity resting against the entry: for a long, a clear liquidity pool (equal lows, prior lows, an obvious swing low) sitting BELOW the entry that has NOT been swept; for a short, resting liquidity ABOVE the entry. If such un-swept liquidity exists against the entry, do NOT provide an entry — set liquidity_block=true and in liquidity_block_note name the level and say price should sweep that liquidity first. If nothing un-swept threatens the entry, set liquidity_block=false and proceed normally. Also check for FOMO / chasing: if price has already run a long way from the setup origin with no pullback, or the entry would be mid-move far from a valid FVG/OB/value zone, or the R:R is poor because the clean entry was already missed, treat it as a chase — set fomo_block=true and in fomo_note say to wait for a pullback into a valid zone. Only flag CLEAR chases, not every strong move. IMPORTANT: whenever you withhold an entry for ANY reason (liquidity_block, fomo_block, or grade C), you MUST give concrete waiting instructions with real prices: fill wait_zone_low and wait_zone_high (the actual price zone to wait for), wait_zone_label (what that zone is), wait_trigger (the exact confirmation to see at that zone), wait_invalidation (the price that kills the idea), and prospective_entry / prospective_stop (what you would take if the zone and trigger are met). Never say only "wait for a pullback" — always name where and what to. Also set alert_price to the single best price to put a chart alert at (usually the near edge of the wait zone, the price that would first tell the trader to look again) and alert_note for what to do when it fires. Read prices off the visible axis as accurately as you can. ${hasCtx?'You are also given perp market context (funding rate and/or ATR) — treat it as a positioning/sentiment input that confirms or tempers the price read, not as a price level. ':''}Output ONLY raw JSON, no markdown, no commentary.
 
 The trader's framework / concepts follow below — apply them strictly.`;
 
@@ -802,7 +802,7 @@ All prices must be plain numbers (no symbols/commas). Keep every text field shor
     const parsed=parseJSON(text);
     if(!parsed)throw new Error('Could not read a clean ticket — the reply may have been cut off. Try fewer images. (Reply began: "'+text.slice(0,70).replace(/\s+/g,' ')+'…")');
     const thumb=images[0]?await makeThumb(images[0].url):null;
-    logMeta={funding, netflow, conceptTitles:chosen.map(c=>c.title), thumb};
+    logMeta={funding, atrpct, conceptTitles:chosen.map(c=>c.title), thumb};
     renderTicket(parsed);
   }catch(err){
     showErr(err.message||'Something went wrong running the analysis.');
@@ -1049,7 +1049,7 @@ function logCurrent(){
     asset:lastRead.asset, coin:deriveCoin(lastRead.asset), timeframe:lastRead.timeframe, direction:lastRead.dir,
     grade:lastRead.grade, state:lastRead.state, entry:lastRead.entry, stop:lastRead.sl,
     tps:lastRead.tps||[], rr:lastRead.rr, confidence:lastRead.confidence,
-    concepts:logMeta.conceptTitles||[], funding:logMeta.funding||'', netflow:logMeta.netflow||'',
+    concepts:logMeta.conceptTitles||[], funding:logMeta.funding||'', atrpct:logMeta.atrpct||'',
     volatility:lastRead.volatility||null, thumb:logMeta.thumb||null, outcome:null, rResult:null, note:''};
   journal.unshift(e); saveJournal(); renderJournal();
   const b=document.getElementById('logBtn'); if(b){b.textContent='✓ Logged to journal'; b.disabled=true;}
