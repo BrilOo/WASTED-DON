@@ -334,12 +334,10 @@
 
         <div class="ctxhead">Market context <em style="color:var(--muted2);font-style:normal;letter-spacing:0">(optional — positioning &amp; flow)</em></div>
         <div class="row2">
-          <label class="fld num"><span>Funding rate (%)</span>
+          <label class="fld num"><span>Funding rate (%) <em style="color:var(--muted2);font-style:normal">optional</em></span>
             <input type="number" id="funding" step="any" placeholder="e.g. 0.01 or -0.03"></label>
-          <label class="fld num"><span>ATR (% of price)</span>
-            <input type="number" id="atrpct" step="any" placeholder="e.g. 2.3"></label>
         </div>
-        <div class="hint">Funding: + = longs pay shorts (crowded longs), a squeeze-risk lean. ATR%: your volatility, used to size the stop. Both optional — leave blank to read purely off the charts.</div>
+        <div class="hint">Plot MA99, Volume and an ATR panel on your chart — the desk reads them straight off the screenshot. Funding is optional; leave blank to read purely off the charts.</div>
         <div class="drop drop-sm" id="ctxDrop" onclick="setPaste('ctx');document.getElementById('ctxFile').click()">
           <b>Drop or paste a data screenshot</b>
           <small>funding · net inflow · OI · ATR — read for values, click then ⌘/Ctrl+V to paste</small>
@@ -717,10 +715,9 @@ async function runAnalysis(){
   const conceptsText='(The trader\'s framework is applied by the desk.)';
   const instructions=document.getElementById('instructions').value.trim();
   const funding=document.getElementById('funding').value.trim();
-  const atrpct=document.getElementById('atrpct').value.trim();
   let ctx='';
   if(funding!=='')ctx+=`- Funding rate: ${funding}%. Positive = longs pay shorts (long-crowded); strongly positive warns of squeeze/reversal risk against longs; negative = short-crowded.\n`;
-  if(atrpct!=='')ctx+=`- ATR is ${atrpct}% of price on the execution timeframe. Use this for the volatility reading and to size the stop (~1.5× ATR).\n`;
+  ctx+=`- If an ATR panel/indicator is visible on the chart, read its value and convert to % of price (ATR% = ATR ÷ price × 100) for the volatility reading and stop sizing. If no ATR is shown, estimate volatility from candle size.\n`;
   if(ctxImages.length)ctx+=`- ${ctxImages.length} market-data screenshot(s) provided (labelled MARKET DATA below) — read funding / net inflow / open interest / ATR values from them. If an ATR (Average True Range) value is visible, convert it to % of price using the chart price (ATR% = ATR ÷ price × 100) and use that to set the volatility reading.\n`;
   const hasCtx=ctx!=='';
   const multi=images.length>1;
@@ -802,7 +799,7 @@ All prices must be plain numbers (no symbols/commas). Keep every text field shor
     const parsed=parseJSON(text);
     if(!parsed)throw new Error('Could not read a clean ticket — the reply may have been cut off. Try fewer images. (Reply began: "'+text.slice(0,70).replace(/\s+/g,' ')+'…")');
     const thumb=images[0]?await makeThumb(images[0].url):null;
-    logMeta={funding, atrpct, conceptTitles:chosen.map(c=>c.title), thumb};
+    logMeta={funding, conceptTitles:chosen.map(c=>c.title), thumb};
     renderTicket(parsed);
   }catch(err){
     showErr(err.message||'Something went wrong running the analysis.');
@@ -1049,7 +1046,7 @@ function logCurrent(){
     asset:lastRead.asset, coin:deriveCoin(lastRead.asset), timeframe:lastRead.timeframe, direction:lastRead.dir,
     grade:lastRead.grade, state:lastRead.state, entry:lastRead.entry, stop:lastRead.sl,
     tps:lastRead.tps||[], rr:lastRead.rr, confidence:lastRead.confidence,
-    concepts:logMeta.conceptTitles||[], funding:logMeta.funding||'', atrpct:logMeta.atrpct||'',
+    concepts:logMeta.conceptTitles||[], funding:logMeta.funding||'',
     volatility:lastRead.volatility||null, thumb:logMeta.thumb||null, outcome:null, rResult:null, note:''};
   journal.unshift(e); saveJournal(); renderJournal();
   const b=document.getElementById('logBtn'); if(b){b.textContent='✓ Logged to journal'; b.disabled=true;}
