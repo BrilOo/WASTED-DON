@@ -1298,16 +1298,19 @@ let watchlist=null;
 async function armPriceAlert(price, asset, note){
   const btn=document.getElementById('armPriceBtn'); const msg=document.getElementById('armPriceMsg');
   if(btn&&btn.dataset.armed==='1')return;
+  // immediate visible feedback, before the network call
   if(btn){btn.disabled=true;btn.textContent='Arming…';}
+  if(msg){msg.style.color='#8fc2ff';msg.textContent='Setting your alert…';}
   try{
     const res=await fetch('/api/arm-price-alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({price,asset,note})});
-    const d=await res.json();
+    const txt=await res.text();
+    let d; try{d=JSON.parse(txt);}catch(_){throw new Error('server returned: '+txt.slice(0,80));}
     if(d.error)throw new Error(d.error);
-    if(btn){btn.dataset.armed='1';btn.disabled=true;btn.textContent='✓ Alert set — you’ll be emailed';btn.style.cursor='default';btn.onclick=null;}
-    if(msg)msg.innerHTML='✓ Alert set for '+esc(d.coin||asset)+' at '+price+'. The email will include the instruction: “'+esc(note||'re-analyze when price reaches the level')+'”';
+    if(btn){btn.dataset.armed='1';btn.disabled=true;btn.textContent='✓ Alert set';btn.style.cursor='default';btn.onclick=null;btn.style.background='rgba(52,199,123,.15)';btn.style.borderColor='rgba(52,199,123,.5)';btn.style.color='#7fe3b0';}
+    if(msg){msg.style.color='#7fe3b0';msg.innerHTML='✓ Alert set — you’ll be emailed when '+esc(d.coin||asset||'price')+' reaches '+price+', with the instruction attached.';}
   }catch(err){
     if(btn){btn.disabled=false;btn.textContent='🔔 Email me when price reaches '+price;}
-    if(msg)msg.textContent='Could not arm: '+(err.message||'error');
+    if(msg){msg.style.color='#f0999b';msg.textContent='Could not set alert: '+(err.message||'error');}
   }
 }
 async function loadWatchlist(force){
