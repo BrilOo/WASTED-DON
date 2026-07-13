@@ -428,7 +428,7 @@
       <p style="margin:0 0 6px;color:var(--muted);font-size:13px;line-height:1.55">
         Coins where a setup may be <b style="color:var(--ink)">forming</b> — price coiling near an un-swept liquidity level, volatility contracting. Coins that already ran are deliberately excluded, because those are the chase.</p>
       <div class="hint" style="margin:0 0 12px">Refreshes automatically each morning at 4:00 (Africa/Nairobi).</div>
-      <div class="revrow"><button class="ghost" onclick="loadWatchlist(true)">↻ Refresh now</button><button class="ghost" onclick="armAlerts()">🔔 Arm sweep alerts</button><span id="wlTime" class="jdate"></span></div>
+      <div class="revrow"><button class="ghost" onclick="loadWatchlist(true)">↻ Refresh now</button><button class="ghost" id="armAlertsBtn" onclick="armAlerts()">🔔 Arm sweep alerts</button><span id="wlTime" class="jdate"></span></div>
       <div id="wlArmMsg" class="hint" style="margin:0 0 10px"></div>
       <div id="wlBody"></div>
     </div>
