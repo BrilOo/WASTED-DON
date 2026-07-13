@@ -193,6 +193,9 @@
   .alertbox .ab-k{font-family:var(--disp);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--info);font-weight:700;margin-bottom:4px}
   .alertbox .ab-v{font-family:var(--mono);font-weight:700;font-size:19px;color:var(--info)}
   .alertbox .ab-n{font-size:12.5px;color:#c3d4ea;margin-top:4px;line-height:1.5}
+  .armbtn{margin-top:10px;width:100%;background:rgba(90,169,255,.14);border:1px solid rgba(90,169,255,.45);color:#8fc2ff;border-radius:8px;padding:9px 12px;font-size:12.5px;font-weight:600;cursor:pointer}
+  .armbtn:hover{background:rgba(90,169,255,.22)}
+  .armbtn:disabled{opacity:.75}
   .badrec{background:rgba(240,86,91,.1);border:1px solid rgba(240,86,91,.4);border-radius:11px;padding:11px 13px;margin-bottom:14px;font-size:12.5px;line-height:1.55;color:#f3b6b8}
   .logrow{margin-top:6px}
   #logBtn{width:100%;background:var(--panel2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line);border:0;border-radius:10px;padding:12px;font-weight:700;font-family:var(--disp);letter-spacing:.02em;font-size:13.5px}
@@ -888,7 +891,7 @@ function renderTicket(r){
     if(tpsW.length)rows.push(['Target', fmtNum(tpsW[0])+(pRR!=null?'   ('+pRR.toFixed(2)+'R)':'')]);
     if(r.wait_invalidation)rows.push(['Idea dies if', r.wait_invalidation]);
     const alertP=num(r.alert_price);
-    const alertHtml=(alertP!=null)?`<div class="alertbox"><div class="ab-k">🔔 Set your alert at</div><div class="ab-v">${fmtNum(alertP)}</div>${r.alert_note?`<div class="ab-n">${esc(r.alert_note)}</div>`:''}</div>`:'';
+    const alertHtml=(alertP!=null)?`<div class="alertbox"><div class="ab-k">🔔 Set your alert at</div><div class="ab-v">${fmtNum(alertP)}</div>${r.alert_note?`<div class="ab-n">${esc(r.alert_note)}</div>`:''}<button class="armbtn" id="armPriceBtn" onclick="armPriceAlert(${alertP}, ${JSON.stringify(r.asset||'')}, ${JSON.stringify((r.alert_note||'').slice(0,200))})">🔔 Email me when price reaches ${fmtNum(alertP)}</button><div id="armPriceMsg" class="ab-n"></div></div>`:'';
     const waitHtml=rows.length?`<div class="block"><div class="k">Your wait plan</div></div>
       <div class="audit" style="margin-bottom:16px">${rows.map(a=>`<div class="arow"><span class="ak">${esc(a[0])}</span><span class="av">${esc(a[1])}</span></div>`).join('')}</div>`:'';
     document.getElementById('ticket').innerHTML=`
@@ -1292,6 +1295,20 @@ async function dismissFocus(){try{await storeSet('focusDismiss',new Date().toDat
 
 /* ---------- watchlist ---------- */
 let watchlist=null;
+async function armPriceAlert(price, asset, note){
+  const btn=document.getElementById('armPriceBtn'); const msg=document.getElementById('armPriceMsg');
+  if(btn){btn.disabled=true;btn.textContent='Arming…';}
+  try{
+    const res=await fetch('/api/arm-price-alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({price,asset,note})});
+    const d=await res.json();
+    if(d.error)throw new Error(d.error);
+    if(btn){btn.textContent='✓ Alert armed';}
+    if(msg)msg.innerHTML=d.armed?('You will be emailed when '+esc(d.coin||asset)+' reaches '+price+'.'):(esc(d.note||'Already armed for this price.'));
+  }catch(err){
+    if(btn){btn.disabled=false;btn.textContent='🔔 Email me when price reaches '+price;}
+    if(msg)msg.textContent='Could not arm: '+(err.message||'error');
+  }
+}
 async function loadWatchlist(force){
   const body=document.getElementById('wlBody'); if(!body)return;
   if(watchlist&&!force){renderWatchlist();return;}
