@@ -221,6 +221,16 @@
   .jr{width:58px;font-family:var(--mono);font-size:11.5px;background:var(--bg);border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:5px 7px;outline:none}
   .jdel{margin-left:auto;background:none;border:0;color:var(--muted2);font-size:15px;cursor:pointer;align-self:flex-start}
   .jempty{text-align:center;color:var(--muted2);padding:36px 16px;font-size:13px;line-height:1.6}
+  .wlrow{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:10px}
+  .wltop{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:6px}
+  .wlcoin{font-family:var(--mono);font-weight:700;font-size:15px;color:var(--ink)}
+  .wlpx{font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .wlside{font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
+  .wlside.lows{background:rgba(52,199,123,.14);color:var(--long)}
+  .wlside.highs{background:rgba(240,86,91,.14);color:var(--short)}
+  .wlmeta{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted2)}
+  .wlnote{font-size:12.5px;color:#c2c9d4;line-height:1.55}
+  .wlbad{margin-top:7px;font-size:12px;color:#f3b6b8}
   .jcoin{width:78px;font-family:var(--mono);font-size:11.5px;font-weight:700;background:var(--bg);border:1px solid var(--line);border-radius:6px;color:var(--ink);padding:3px 7px;text-transform:uppercase;outline:none}
   .jcoin:focus{border-color:var(--gold)}
   .jnote{width:100%;margin-top:9px;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:8px 10px;font-size:12.5px;font-family:var(--sans);resize:vertical;min-height:34px;outline:none;line-height:1.5}
@@ -296,6 +306,7 @@
       <button id="tabAnalyze" class="on" onclick="setView('analyze')">Analyze</button>
       <button id="tabConcepts" onclick="setView('concepts')">Concepts</button>
       <button id="tabJournal" onclick="setView('journal')">Journal</button>
+      <button id="tabWatchlist" onclick="setView('watchlist')">Watchlist</button>
     </div>
   </header>
 
@@ -404,6 +415,19 @@
       <div id="jstats"></div>
       <div id="jlessons"></div>
       <div id="jlist"></div>
+    </div>
+  </div>
+
+  <!-- WATCHLIST VIEW -->
+  <div id="viewWatchlist" class="hidden">
+    <div class="card" style="max-width:820px;margin:0 auto">
+      <h2>Daily watchlist</h2>
+      <p style="margin:0 0 6px;color:var(--muted);font-size:13px;line-height:1.55">
+        Coins where a setup may be <b style="color:var(--ink)">forming</b> — price coiling near an un-swept liquidity level, volatility contracting. Coins that already ran are deliberately excluded, because those are the chase.</p>
+      <div class="hint" style="margin:0 0 12px">Refreshes automatically each morning at 4:00 (Africa/Nairobi).</div>
+      <div class="revrow"><button class="ghost" onclick="loadWatchlist(true)">↻ Refresh now</button><button class="ghost" onclick="armAlerts()">🔔 Arm sweep alerts</button><span id="wlTime" class="jdate"></span></div>
+      <div id="wlArmMsg" class="hint" style="margin:0 0 10px"></div>
+      <div id="wlBody"></div>
     </div>
   </div>
 
@@ -527,12 +551,13 @@ async function saveAccess(){await storeSet('access',document.getElementById('acc
 
 /* ---------- view switch ---------- */
 function setView(v){
-  ['Analyze','Concepts','Journal'].forEach(x=>{
+  ['Analyze','Concepts','Journal','Watchlist'].forEach(x=>{
     document.getElementById('view'+x).classList.toggle('hidden',v!==x.toLowerCase());
     document.getElementById('tab'+x).classList.toggle('on',v===x.toLowerCase());
   });
   if(v==='journal')renderJournal();
   if(v==='analyze')renderFocus();
+  if(v==='watchlist')loadWatchlist();
 }
 
 /* ---------- concepts manager ---------- */
@@ -1264,6 +1289,57 @@ async function renderFocus(){
   el.innerHTML=`<span class="ft">Today’s focus</span><span class="fx">${esc(insights.focus)}</span><button class="fd" onclick="dismissFocus()" title="Dismiss for today">✕</button>`;
 }
 async function dismissFocus(){try{await storeSet('focusDismiss',new Date().toDateString());}catch(e){} const el=document.getElementById('focusBanner'); if(el)el.classList.add('hidden');}
+
+/* ---------- watchlist ---------- */
+let watchlist=null;
+async function loadWatchlist(force){
+  const body=document.getElementById('wlBody'); if(!body)return;
+  if(watchlist&&!force){renderWatchlist();return;}
+  body.innerHTML='<div class="jempty">Screening the market…</div>';
+  try{
+    const res=await fetch('/api/watchlist'+(force?'?t='+Date.now():''));
+    const txt=await res.text();
+    let d;
+    try{d=JSON.parse(txt);}
+    catch(_){throw new Error(res.status===504?'The screener timed out. Hit Refresh again — it caches after the first successful run.':'The screener failed (HTTP '+res.status+'). Try Refresh again in a moment.');}
+    if(d.error)throw new Error(d.error+(d.hint?' — '+d.hint:''));
+    watchlist=d; renderWatchlist();
+  }catch(err){
+    body.innerHTML='<div class="err">Could not load the watchlist: '+esc(err.message||'error')+'</div>';
+  }
+}
+function renderWatchlist(){
+  const body=document.getElementById('wlBody'); const t=document.getElementById('wlTime');
+  if(!watchlist||!watchlist.items){body.innerHTML='<div class="jempty">No data yet.</div>';return;}
+  if(t&&watchlist.generatedAt){const d=new Date(watchlist.generatedAt);t.textContent='updated '+d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});}
+  if(!watchlist.items.length){body.innerHTML='<div class="jempty">Nothing is coiling near an un-swept level right now.<br>That is a valid answer — no setups forming means no trades.</div>';return;}
+  body.innerHTML=watchlist.items.map(it=>{
+    const bad=coinRecordWarning(it.coin);
+    return `<div class="wlrow">
+      <div class="wltop">
+        <span class="wlcoin">${esc(it.coin)}</span>
+        <span class="wlpx">${fmtNum(it.price)}</span>
+        <span class="wlside ${it.levelSide==='lows'?'lows':'highs'}">${it.levelSide==='lows'?'POOL BELOW':'POOL ABOVE'}</span>
+        <span class="wlmeta">${it.distPct}% away · ATR ${it.atrPct}% · 24h ${it.move24>0?'+':''}${it.move24}%</span>
+      </div>
+      <div class="wlnote">${esc(it.note)}</div>
+      ${bad?`<div class="wlbad">⚠ Your record on ${esc(it.coin)} is poor — check the journal before trading it.</div>`:''}
+    </div>`;
+  }).join('');
+}
+async function armAlerts(){
+  const m=document.getElementById('wlArmMsg');
+  if(!watchlist||!watchlist.items||!watchlist.items.length){if(m)m.textContent='Refresh the watchlist first, then arm alerts.';return;}
+  if(m)m.textContent='Arming alerts…';
+  try{
+    const res=await fetch('/api/arm-alerts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:watchlist.items})});
+    const d=await res.json();
+    if(d.error)throw new Error(d.error);
+    if(m)m.innerHTML='✓ Armed '+d.armed+' levels. You will be emailed when any is swept (price breaches the level and a 15m candle closes back).';
+  }catch(err){
+    if(m)m.textContent='Could not arm alerts: '+(err.message||'error');
+  }
+}
 
 /* ---------- export / import ---------- */
 function showJournalMsg(m){const el=document.getElementById('jmsg'); if(!el)return; el.textContent=m; setTimeout(()=>{if(el.textContent===m)el.textContent='';},4000);}
