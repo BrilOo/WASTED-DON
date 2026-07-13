@@ -1297,13 +1297,14 @@ async function dismissFocus(){try{await storeSet('focusDismiss',new Date().toDat
 let watchlist=null;
 async function armPriceAlert(price, asset, note){
   const btn=document.getElementById('armPriceBtn'); const msg=document.getElementById('armPriceMsg');
+  if(btn&&btn.dataset.armed==='1')return;
   if(btn){btn.disabled=true;btn.textContent='Arming…';}
   try{
     const res=await fetch('/api/arm-price-alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({price,asset,note})});
     const d=await res.json();
     if(d.error)throw new Error(d.error);
-    if(btn){btn.textContent='✓ Alert armed';}
-    if(msg)msg.innerHTML=d.armed?('You will be emailed when '+esc(d.coin||asset)+' reaches '+price+'.'):(esc(d.note||'Already armed for this price.'));
+    if(btn){btn.dataset.armed='1';btn.disabled=true;btn.textContent='✓ Alert set — you’ll be emailed';btn.style.cursor='default';btn.onclick=null;}
+    if(msg)msg.innerHTML='✓ Alert set for '+esc(d.coin||asset)+' at '+price+'. The email will include the instruction: “'+esc(note||'re-analyze when price reaches the level')+'”';
   }catch(err){
     if(btn){btn.disabled=false;btn.textContent='🔔 Email me when price reaches '+price;}
     if(msg)msg.textContent='Could not arm: '+(err.message||'error');
