@@ -411,6 +411,14 @@
         <input type="file" id="outcomeFile" accept="image/*" class="hidden" onchange="handleOutcomeFile(event)">
       </div>
       <div id="jmsg" class="hint" style="margin:0 0 12px"></div>
+      <div style="background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:14px">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:7px;line-height:1.5">☁ <b style="color:var(--ink)">Cloud sync</b> — set a private sync code and your journal saves to the cloud, so it survives app updates and works across devices. Use the same code everywhere to see the same journal.</div>
+        <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="synccode" placeholder="your private sync code" style="flex:1;min-width:140px;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:8px 11px;font-size:13px;font-family:var(--mono)" onchange="saveSyncCode()">
+          <button class="ghost" onclick="cloudLoad()">↻ Load from cloud</button>
+        </div>
+        <div id="cloudStatus" style="font-size:11.5px;margin-top:7px;font-family:var(--mono);min-height:15px"></div>
+      </div>
       <div id="backupReminder"></div>
       <div class="revrow"><button class="ghost" id="reviewBtn" onclick="runReview()">🔎 Run review</button><span id="reviewDue" class="duebadge hidden">weekly review due</span></div>
       <div id="jinsights"></div>
@@ -518,12 +526,79 @@ async function loadState(){
   renderConcepts(); renderChips(); renderJournal(); renderFocus();
   let _adm=''; try{_adm=await storeGet('admin');}catch(e){}
   applyAdmin(_adm==='1');
+  // restore sync code and pull the journal from the cloud if one is set
+  try{const sc=localStorage.getItem('wd_synccode'); if(sc){document.getElementById('synccode').value=sc; cloudLoad();}}catch(e){}
 }
 async function saveConcepts(){await storeSet('concepts',JSON.stringify(concepts));}
 async function saveSettings(){
   await storeSet('settings',JSON.stringify({account:document.getElementById('account').value, risk:document.getElementById('risk').value}));
 }
-async function saveJournal(){await storeSet('journal',JSON.stringify(journal));}
+async function saveJournal(){
+  await storeSet('journal',JSON.stringify(journal));
+  cloudSaveSoon();
+}
+
+/* ---------- cloud sync (survives updates, cache clears, device changes) ---------- */
+function syncCode(){
+  // ties your cloud journal to you. Uses a dedicated sync code if set, else the access code.
+  let c=''; try{c=localStorage.getItem('wd_synccode')||'';}catch(e){}
+  if(!c){const a=document.getElementById('access'); c=a?a.value.trim():'';}
+  return c;
+}
+let _cloudTimer=null;
+function cloudSaveSoon(){
+  const code=syncCode(); if(!code)return;              // no code = local-only, no cloud
+  clearTimeout(_cloudTimer);
+  _cloudTimer=setTimeout(cloudSaveNow, 1200);          // debounce rapid edits
+}
+async function cloudSaveNow(){
+  const code=syncCode(); if(!code)return;
+  const st=document.getElementById('cloudStatus');
+  try{
+    if(st){st.textContent='saving…';st.style.color='var(--muted)';}
+    const payload={concepts, journal, insights, settings:{account:document.getElementById('account').value, risk:document.getElementById('risk').value}};
+    const res=await fetch('/api/journal',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,data:payload})});
+    const d=await res.json();
+    if(d.error)throw new Error(d.error);
+    if(st){st.textContent='✓ synced to cloud';st.style.color='var(--long)';}
+  }catch(err){
+    if(st){st.textContent='cloud save failed — export a backup';st.style.color='var(--short)';}
+  }
+}
+async function cloudLoad(){
+  const code=syncCode(); if(!code)return false;
+  const st=document.getElementById('cloudStatus');
+  try{
+    if(st){st.textContent='loading from cloud…';st.style.color='var(--muted)';}
+    const res=await fetch('/api/journal?code='+encodeURIComponent(code));
+    const d=await res.json();
+    if(d.error)throw new Error(d.error);
+    if(d.data){
+      // cloud is the source of truth if it has more entries than local (avoids wiping)
+      const cloudJ=Array.isArray(d.data.journal)?d.data.journal:[];
+      if(cloudJ.length>=journal.length){
+        journal=cloudJ;
+        if(Array.isArray(d.data.concepts)&&d.data.concepts.length){concepts=d.data.concepts; selected=new Set(concepts.map(c=>c.id));}
+        if(d.data.insights){insights=d.data.insights;}
+        await storeSet('journal',JSON.stringify(journal));
+        renderConcepts&&renderConcepts(); renderChips&&renderChips();
+      }
+      if(st){st.textContent='✓ loaded from cloud';st.style.color='var(--long)';}
+      renderJournal(); renderFocus&&renderFocus();
+      return true;
+    }
+    if(st){st.textContent='';}
+    return false;
+  }catch(err){
+    if(st){st.textContent='cloud load failed — using this device';st.style.color='var(--short)';}
+    return false;
+  }
+}
+function saveSyncCode(){
+  const v=document.getElementById('synccode').value.trim();
+  try{localStorage.setItem('wd_synccode',v);}catch(e){}
+  if(v){cloudLoad().then(()=>cloudSaveNow());}
+}
 async function saveAccess(){ /* access code is never stored — field stays blank each session */ try{await storeSet('access','');}catch(e){} }
 ['account','risk'].forEach(id=>document.getElementById(id).addEventListener('change',saveSettings));
 
