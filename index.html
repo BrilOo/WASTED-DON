@@ -411,6 +411,7 @@
         <input type="file" id="outcomeFile" accept="image/*" class="hidden" onchange="handleOutcomeFile(event)">
       </div>
       <div id="jmsg" class="hint" style="margin:0 0 12px"></div>
+      <div id="backupReminder"></div>
       <div class="revrow"><button class="ghost" id="reviewBtn" onclick="runReview()">🔎 Run review</button><span id="reviewDue" class="duebadge hidden">weekly review due</span></div>
       <div id="jinsights"></div>
       <div id="jstats"></div>
@@ -452,6 +453,7 @@ const SEED_CONCEPTS=[
    {id:"seed_exit_rules", title:"Exit & risk rules", autoselect:true},
    {id:"seed_no_fomo", title:"Avoid FOMO / no chasing", autoselect:true},
    {id:"seed_ma99_trend", title:"MA99 trend filter", autoselect:true},
+   {id:"seed_oi_confirm", title:"Open Interest confirmation", autoselect:true},
    // Concept bodies live SERVER-SIDE in api/analyze.js so they are never sent to any browser.
 ];
 
@@ -1148,6 +1150,7 @@ function jtagStyle(kind,val){
 function renderJournal(){
   renderStats();
   renderInsights(); renderLessons(); updateDue();
+  renderBackupReminder();
   const list=document.getElementById('jlist');
   if(!journal.length){list.innerHTML='<div class="jempty">No logged reads yet.<br>Run an analysis and tap “Log this read to journal”.</div>';return;}
   list.innerHTML=journal.map(e=>{
@@ -1339,6 +1342,27 @@ async function armAlerts(){
 
 /* ---------- export / import ---------- */
 function showJournalMsg(m){const el=document.getElementById('jmsg'); if(!el)return; el.textContent=m; setTimeout(()=>{if(el.textContent===m)el.textContent='';},4000);}
+
+/* ---------- backup reminder ---------- */
+function renderBackupReminder(){
+  const el=document.getElementById('backupReminder'); if(!el)return;
+  let lastCount=0; try{lastCount=parseInt(localStorage.getItem('wd_lastBackupCount'))||0;}catch(e){}
+  const unsaved=journal.length-lastCount;
+  if(journal.length===0||unsaved<=0){el.innerHTML='';return;}
+  // gentle after 1, stronger after 5
+  const strong=unsaved>=5;
+  el.innerHTML=`<div style="display:flex;align-items:center;gap:11px;background:${strong?'rgba(240,86,91,.1)':'rgba(240,180,41,.09)'};border:1px solid ${strong?'rgba(240,86,91,.4)':'rgba(240,180,41,.34)'};border-radius:11px;padding:11px 13px;margin-bottom:14px">
+    <span style="font-size:17px;flex:none">${strong?'⚠️':'💾'}</span>
+    <div style="flex:1;font-size:12.5px;line-height:1.5;color:${strong?'#f3b6b8':'#e8dcc0'}">
+      <b>${unsaved} trade${unsaved>1?'s':''} not backed up yet.</b> Your journal lives in this browser only — export a backup so an app update or cleared cache can’t lose it.
+    </div>
+    <button class="ghost" style="flex:none;border-color:${strong?'rgba(240,86,91,.5)':'rgba(240,180,41,.5)'};color:${strong?'#f3b6b8':'#e8dcc0'}" onclick="exportData()">⬇ Back up now</button>
+  </div>`;
+}
+function markBackupDone(){
+  try{localStorage.setItem('wd_lastBackupCount',String(journal.length));}catch(e){}
+  renderBackupReminder();
+}
 async function exportData(){
   const data={app:'WASTED_DON',version:1,exportedAt:new Date().toISOString(),
     concepts, journal, settings:{account:document.getElementById('account').value, risk:document.getElementById('risk').value}};
@@ -1346,6 +1370,7 @@ async function exportData(){
   const url=URL.createObjectURL(blob); const a=document.createElement('a');
   a.href=url; a.download='wasted_don_backup_'+new Date().toISOString().slice(0,10)+'.json'; a.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
+  markBackupDone();
   showJournalMsg('Backup downloaded.');
 }
 function importData(){document.getElementById('importFile').click();}
@@ -1356,7 +1381,7 @@ async function handleImport(ev){
     if(Array.isArray(d.concepts)){concepts=d.concepts; selected=new Set(concepts.map(c=>c.id)); await saveConcepts(); renderConcepts(); renderChips();}
     if(Array.isArray(d.journal)){journal=d.journal; await saveJournal();}
     if(d.settings){if(d.settings.account!=null)document.getElementById('account').value=d.settings.account; if(d.settings.risk!=null)document.getElementById('risk').value=d.settings.risk; await saveSettings();}
-    renderJournal(); showJournalMsg('Backup imported.');
+    renderJournal(); markBackupDone(); showJournalMsg('Backup imported.');
   }catch(err){showJournalMsg('Could not read that file — is it a WASTED_DON backup?');}
   ev.target.value='';
 }
