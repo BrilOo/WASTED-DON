@@ -20,6 +20,9 @@
     },
     "api/arm-price-alert.js": {
       "maxDuration": 30
+    },
+    "api/journal.js": {
+      "maxDuration": 30
     }
   },
   "crons": [
