@@ -19,7 +19,7 @@
 //   ALERT_EMAIL_FROM - a verified sender, e.g. alerts@yourdomain — or use onboarding@resend.dev for testing
 //   CRON_SECRET      - any random string; the scheduler must send it (?key=... ) so randoms can't trigger emails
 //   KV_REST_API_URL, KV_REST_API_TOKEN - auto-added when you create a Vercel KV store
-
+ 
 const HOSTS = [
   "https://data-api.binance.vision",
   "https://data.binance.com",
