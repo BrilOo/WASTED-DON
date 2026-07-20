@@ -5,7 +5,7 @@
 // those coins already made their move). It screens for coins where a setup may be
 // FORMING: price coiling near an un-swept liquidity level, with contracting volatility,
 // and explicitly EXCLUDES anything that already ran hard in the last 24h.
-
+ 
 // NOTE ON HOSTS: Binance returns HTTP 451 ("Unavailable For Legal Reasons") to requests
 // originating from restricted regions — which includes the US, where Vercel functions run
 // by default. Two mitigations are in place:
