@@ -1,5 +1,5 @@
 // Sweep-alert checker for WASTED_DON.
-//
+// 
 // HOW IT WORKS
 //   1. /api/watchlist produces coins watching a liquidity level (e.g. TRY sweep of 0.3294).
 //   2. An external scheduler (cron-job.org) pings THIS endpoint every ~10 minutes.
